@@ -10,7 +10,7 @@
 - name: Configure Nginx
   copy:
     src: nginx.conf
-    dest: /etc/sites-enabled/default
+    dest: /etc/nginx/sites-enabled/default
   sudo: yes
 
 - name: Enable and start Nginx

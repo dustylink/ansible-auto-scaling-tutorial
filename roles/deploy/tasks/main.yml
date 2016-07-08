@@ -24,12 +24,12 @@
 - name: Install upstart script
   copy:
     src: upstart.conf
-    dest: /etc/upstart/webapp.conf
+    dest: /etc/init/webapp.conf
   sudo: yes
 
-- name: Enable and start the application
-  service:
-    name: webapp
-    enabled: yes
-    state: restarted
-  sudo: yes
+#- name: Enable and start the application
+#  service:
+#    name: webapp
+#    enabled: yes
+#    state: restarted
+#  sudo: yes

@@ -11,6 +11,7 @@
     sort_end: 1
     no_result_action: fail
   register: ami_result
+- debug: var=ami_result
 
 - name: Launch new instance
   ec2:
@@ -25,6 +26,7 @@
     volumes: "{{ volumes }}"
     wait: yes
   register: ec2
+- debug: var=ec2
 
 - name: Add new instances to host group
   add_host:
