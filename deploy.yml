@@ -27,8 +27,8 @@
   gather_facts: yes
   roles:
     - build-ami
-#    - create-launch-configuration
-#    - load-balancer
+    - create-launch-configuration
+    - load-balancer
 #    - auto-scaling
 #    - dns
 
