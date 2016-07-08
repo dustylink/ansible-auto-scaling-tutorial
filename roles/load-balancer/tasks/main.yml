@@ -1,5 +1,6 @@
 ---
 # roles/load-balancer/tasks/main.yml
+# includes temp fix for https://github.com/ansible/ansible-modules-core/issues/3444
 
 - name: Configure Elastic Load Balancers
   ec2_elb_lb:
@@ -21,3 +22,7 @@
       unhealthy_threshold: 6
       healthy_threshold: 2
   register: elb_result
+  until: "elb_result.module_stderr is not defined"
+  retries: 2
+  delay: 1
+  debug: var=elb_result

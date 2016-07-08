@@ -29,7 +29,7 @@
     - build-ami
     - create-launch-configuration
     - load-balancer
-#    - auto-scaling
+    - auto-scaling
 #    - dns
 
 #- hosts: localhost
