@@ -4,17 +4,21 @@
 - name: Retrieve current Auto Scaling Group properties
   command: "aws --region {{ region }} autoscaling describe-auto-scaling-groups --auto-scaling-group-names webapp"
   register: asg_properties_result
+- debug: var=asg_properties_result
+- debug: var=asg_properties_result.stdout
 
+# if ASG does not exist, the below fails.  need to determine why. bootstrap with tf?
 - name: Set asg_properties variable from JSON output if the Auto Scaling Group already exists
   set_fact:
     asg_properties: "{{ (asg_properties_result.stdout | from_json).AutoScalingGroups[0] }}"
   when: (asg_properties_result.stdout | from_json).AutoScalingGroups | count
 
+# ASG must be min2, max?, and set to scale. bootstrap with tf?
 - name: Configure Auto Scaling Group and perform rolling deploy
   ec2_asg:
     region: "{{ region }}"
     name: webapp
-    launch_config_name: webapp
+    launch_config_name: "{{ ec2_lc.name }}"
     availability_zones: "{{ zone }}"
     health_check_type: ELB
     health_check_period: 300
@@ -27,6 +31,7 @@
       - webapp
     state: present
   register: asg_result
+- debug: var=asg_result
 
 - name: Configure Scaling Policies
   ec2_scaling_policy:
@@ -50,16 +55,17 @@
       min_adjustment_step: 1
       cooldown: 300
   register: sp_result
+- debug: var=sp_result
 
 - name: Determine Metric Alarm configuration
   set_fact:
     metric_alarms:
-      - name: "{{ asg_name }}-ScaleUp"
+      - name: "{{ sp_result.results[0].as_name }}-ScaleUp"
         comparison: ">="
         threshold: 50.0
         alarm_actions:
           - "{{ sp_result.results[0].arn }}"
-      - name: "{{ asg_name }}-ScaleDown"
+      - name: "{{ sp_result.results[0].as_name }}-ScaleDown"
         comparison: "<="
         threshold: 20.0
         alarm_actions:
@@ -79,8 +85,9 @@
     evaluation_periods: 5
     unit: "Percent"
     dimensions:
-      AutoScalingGroupName: "{{ asg_name }}"
+      AutoScalingGroupName: "{{ sp_result.results[0].as_name }}"
     alarm_actions: "{{ item.alarm_actions }}"
-  with_items: metric_alarms
-  when: max_size > 1
+  with_items: "{{ metric_alarms }}"
+  when: asg_result.max_size > 1
   register: ma_result
+- debug: var=ma_result

@@ -30,7 +30,7 @@
     - create-launch-configuration
     - load-balancer
     - auto-scaling
-#    - dns
+    - dns
 
 #- hosts: localhost
 #  connection: local
