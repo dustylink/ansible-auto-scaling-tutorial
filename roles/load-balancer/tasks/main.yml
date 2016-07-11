@@ -26,3 +26,7 @@
   retries: 2
   delay: 1
 - debug: var=elb_result
+
+
+
+elb_result.elb.name

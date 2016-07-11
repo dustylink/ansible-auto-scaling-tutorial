@@ -1,10 +1,14 @@
 ---
 # roles/deploy/tasks/main.yml
 
-- name: Install git
-  apt:
-    pkg: git
-    state: present
+- name: Install Base Packages
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - build-essential
+    - npm
+    - nodejs-legacy
+    - git
+    - curl
   sudo: yes
 
 - name: Create www directory
@@ -21,15 +25,18 @@
     dest: /srv/www/webapp
     version: master
 
+- name: Install app
+  npm: name=app path=/srv/www/webapp
+
 - name: Install upstart script
   copy:
     src: upstart.conf
     dest: /etc/init/webapp.conf
   sudo: yes
 
-#- name: Enable and start the application
-#  service:
-#    name: webapp
-#    enabled: yes
-#    state: restarted
-#  sudo: yes
+- name: Enable and start the application
+  service:
+    name: webapp
+    enabled: yes
+    state: restarted
+  sudo: yes

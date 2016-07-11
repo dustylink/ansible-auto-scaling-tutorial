@@ -18,7 +18,7 @@
     region: "{{ region }}"
     keypair: "{{ keypair }}"
     zone: "{{ zone }}"
-    group: "{{ security_groups }}"
+    group: ['mypizza', 'testansible']
     image: "{{ ami_result.results[0].ami_id }}"
     instance_type: "{{ instance_type }}"
     instance_tags:
