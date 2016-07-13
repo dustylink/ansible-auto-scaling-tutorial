@@ -1,3 +1,5 @@
+# Notes. Needs update
+
 # EC2 Auto Scaling with Ansible
 
 We use Ansible to manage application deployments to EC2 with Auto Scaling. It's particularly suited because it lends itself to easy integration with existing processes such as CI, enabling rapid development of a continuous deployment pipeline. One crucial feature is that it is able to hand-hold a rolling deploy (that is, zero downtime) by terminating and replacing instances in batches. Typically when we deploy to EC2, we do so in an automated fashion which makes it important to have rollback capability and for this, we typically maintain a short history of Amazon Machine Images (AMIs) and Launch Configurations which are associated with a particular Auto Scaling Group (ASG). In the event you wish to roll back to a particular version of your application, you can simply associate your ASG with the previously known working launch configuration and replace all your instances.

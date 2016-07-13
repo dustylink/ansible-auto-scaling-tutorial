@@ -1,0 +1,20 @@
+files:
+  # Standard System stuff...
+  - /var/log/fail2ban.log
+  - /var/log/auth.log
+  - /var/log/syslog
+  - /var/log/mail.log
+  - /var/log/mail.err
+  # Apache logs
+  - /var/log/apache2/error.log
+  - /var/log/apache2/other_vhosts_access.log
+  # Application logs
+  - /var/mypizza/current/log/production.log
+  - /var/mypizza/current/log/staging.log
+exclude_patterns:
+  - GET /500.html
+destination:
+  host: {{ papertrail_host }}
+  port: {{ papertrail_port }}
+  protocol: tls
+new_file_check_interval: "10"

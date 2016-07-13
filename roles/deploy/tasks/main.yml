@@ -1,42 +1,290 @@
 ---
 # roles/deploy/tasks/main.yml
 
+- name: Update base AMI
+  apt: upgrade=dist update_cache=yes
+  sudo: yes
+
 - name: Install Base Packages
-  apt: name={{ item }} update_cache=yes state=latest
+  apt: name={{ item }} state=latest
   with_items:
     - build-essential
-    - npm
-    - nodejs-legacy
-    - git
-    - curl
+    - autoconf
+    - awscli
+    - nmap
+    - ntp
+    - git-core
+    - emacs
+    - augeas-tools
+    - fail2ban
+    - god
+    - imagemagick
+    - libapr1-dev
+    - libaprutil1-dev
+    - libasound2-dev
+    - libgconf2-dev
+    - libgeos++-dev
+    - libgif-dev
+    - libgpm-dev
+    - libgtk-3-dev
+    - libm17n-dev
+    - libmagick++-dev
+    - libmysqlclient-dev
+    - libotf-dev
+    - libproj-dev
+    - libreadline-dev
+    - libsqlite3-dev
+    - libssl-dev
+    - libxaw7-dev
+    - libxslt1-dev
+    - libyaml-dev
+    - lynx
+    - mysql-client
+    - nodejs
+    - quilt
+    - remake
+    - sharutils
+    - sqlite3
+    - xaw3dg-dev
+    - xterm
+    - zshdb
+    - qt4-dev-tools
+    - libqt4-dev
+    - libqt4-core
+    - libqt4-gui
   sudo: yes
 
-- name: Create www directory
-  file:
-    path: /srv/www
-    owner: ubuntu
-    group: ubuntu
-    state: directory
+- name: Install Apache
+  apt: package={{ item }} state=latest
+  with_items:
+    - apache2-dev
+    - apache2-mpm-worker
   sudo: yes
 
-- name: Clone repository
-  git:
-    repo: "https://github.com/atplanet/hello-world-express-app.git"
-    dest: /srv/www/webapp
-    version: master
+##sudo apt-get update
+##sudo apt-get -y upgrade
+##sudo apt-get -y install awscli apache2-dev apache2-mpm-worker augeas-tools autoconf build-essential emacs fail2ban git-core god imagemagick libapr1-dev libaprutil1-dev libasound2-dev libgconf2-dev libgeos++-dev libgif-dev libgpm-dev libgtk-3-dev libm17n-dev libmagick++-dev libmysqlclient-dev libotf-dev libproj-dev libreadline-dev libsqlite3-dev libssl-dev libxaw7-dev libxslt1-dev libyaml-dev lynx mysql-client nmap nodejs ntp quilt remake sharutils sqlite3 xaw3dg-dev xterm zshdb qt4-dev-tools libqt4-dev libqt4-core libqt4-gui
 
-- name: Install app
-  npm: name=app path=/srv/www/webapp
-
-- name: Install upstart script
-  copy:
-    src: upstart.conf
-    dest: /etc/init/webapp.conf
+- name: Set Postfix option type as internet site
+  debconf: name=postfix question="postfix/main_mailer_type" value="'Internet Site'" vtype="string"
   sudo: yes
 
-- name: Enable and start the application
-  service:
-    name: webapp
-    enabled: yes
-    state: restarted
+- name: Set Postfix option hostname
+  debconf: name=postifx question="postfix/mailname" value="{{ansible_fqdn}}" vtype="string"
   sudo: yes
+
+- name: Install mail toolset
+  apt: package={{ item }} state=installed force=yes update_cache=yes cache_valid_time=3600
+  with_items:
+    - postfix
+    - mailutils
+    - bsd-mailx
+  sudo: yes
+
+## config postfix for noninteractive install - can check /etc/postfix/main.cf
+##sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+##LOCAL_HOSTNAME="$(wget -q -O - http://169.254.169.254/latest/meta-data/local-hostname)"
+##sudo debconf-set-selections <<< "postfix postfix/mailname string ${LOCAL_HOSTNAME}"
+##sudo apt-get install -y postfix bsd-mailx
+
+
+### Packer bootstrap.sh ###
+## move this kind of thing to Vault
+aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/
+aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza /home/ubuntu/.ssh/
+aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/known_hosts /home/ubuntu/.ssh/
+chmod 400 ~/.ssh/git-deploy-mypizza
+echo "IdentityFile ~/.ssh/git-deploy-mypizza" >> ~/.ssh/config
+git config --global user.name "deploy-mypizza"
+git config --global user.email "git-deploy@mypizza.com"
+
+
+### Packer install-ruby.sh ###
+git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
+source ~/.bash_profile
+rbenv install 2.2.3
+rbenv global 2.2.3
+ruby -v  ## can test expected output
+echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+gem install bundler
+
+
+#pull ops-repo for conf files
+## solve subtree merge issue
+git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
+mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
+rm -rf /tmp/mypizza-ruby/
+
+
+## Configure Apache
+## Extended Validation SSL
+sudo mkdir /etc/evssl
+sudo mv /tmp/sf_bundle-g2-g1.crt /etc/evssl
+sudo mv /tmp/mypizza.crt /etc/evssl
+sudo mv /tmp/mypizza.key /etc/evssl
+## these seem very permissive, test and lock down further if possible
+chmod 766 /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt
+chmod 644 /etc/evssl/mypizza.key
+sudo chown root:root /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt /etc/evssl/mypizza.key
+sudo a2enmod rewrite
+sudo a2enmod ssl
+sudo service apache2 restart
+
+
+### Packer install-passenger.sh ###
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
+sudo apt-get install -y apt-transport-https ca-certificates
+unset HISTFILE
+sudo sh -c 'echo deb https://download:017335304efea7182b030e9af2abab392ad4d69fb07753b552eadbc0addcf260@www.phusionpassenger.com/enterprise_apt trusty main > /etc/apt/sources.list.d/passenger.list'
+sudo chown root: /etc/apt/sources.list.d/passenger.list
+sudo chmod 600 /etc/apt/sources.list.d/passenger.list
+sudo apt-get update
+sudo apt-get install -y libapache2-mod-passenger-enterprise
+## configure passenger
+sudo mv /tmp/passenger-enterprise-license /etc/ && \
+sudo chown root:root /etc/passenger-enterprise-license && \
+sudo chmod 644 /etc/passenger-enterprise-license
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Papertrail ##
+echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
+
+#wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb
+
+sudo dpkg -i remote-syslog2_0.17_amd64.deb
+
+sudo gem install papertrail
+
+
+## configure papertrail
+
+#sudo mv /tmp/log_files.yml /etc/
+
+
+#sudo mv /tmp/30-papertrail.conf /etc/rsyslog.d/ && \
+#sudo chmod 644 /etc/rsyslog.d/30-papertrail.conf && \
+#sudo chown root: /etc/rsyslog.d/30-papertrail.conf
+
+
+#sudo mv /tmp/remote_syslog.conf /etc/init/ && \
+#sudo chmod 644 /etc/init/remote_syslog.conf && \
+#sudo chown root: /etc/init/remote_syslog.conf
+
+
+#sudo service remote_syslog restart 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## DataDog agent ##
+DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
+
+
+## prep for code
+sudo cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
+sudo cp /etc/crontab /etc/crontab.orig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#- name: Create www directory
+#  file:
+#    path: /srv/www
+#    owner: ubuntu
+#    group: ubuntu
+#    state: directory
+#  sudo: yes
+
+#- name: Clone repository
+#  git:
+#    repo: "https://github.com/atplanet/hello-world-express-app.git"
+#    dest: /srv/www/webapp
+#    version: master
+
+#- name: Install app
+#  npm: name=app path=/srv/www/webapp
+
+#- name: Install upstart script
+#  copy:
+#    src: upstart.conf
+#    dest: /etc/init/webapp.conf
+#  sudo: yes
+
+#- name: Enable and start the application
+#  service:
+#    name: webapp
+#    enabled: yes
+#    state: restarted
+#  sudo: yes
