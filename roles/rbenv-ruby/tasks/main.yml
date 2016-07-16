@@ -176,6 +176,7 @@
 
 - name: check ruby {{ rbenv.ruby_version }} installed for system
   shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
+  become: yes
   register: ruby_installed
   changed_when: false
   ignore_errors: yes
