@@ -2,7 +2,7 @@
   apt: update_cache=yes
   become: true
   tags:
-    - rbenv
+    - rbenv-ruby
 
 # required for build essential
 - name: Add 'main' repo based on Ubuntu release
@@ -23,5 +23,5 @@
     - zlib1g-dev
   become: true
   tags:
-    - rbenv
+    - rbenv-ruby
 

@@ -11,5 +11,5 @@
     - git
   become: true
   tags:
-    - rbenv
+    - rbenv-ruby
 

@@ -1,5 +1,8 @@
 ---
-- name: include env vars
+# roles/rbenv-ruby/tasks/main.yml
+
+# setup
+- name: Include env vars
   include_vars: "{{ rbenv.env }}.yml"
 
 - include: apt_build_depends.yml
@@ -9,10 +12,11 @@
 - include: homebrew_build_depends.yml
   when: ansible_os_family == 'Darwin'
 
-- name: set rbenv_owner
+- name: Set rbenv_owner
   set_fact: 'rbenv_owner={{ rbenv_owner | default("root", true) }}'
 
-- name: checkout rbenv_repo for system
+# system: rbenv install
+- name: Checkout rbenv_repo for system
   become: yes
   become_user: '{{ rbenv_owner }}'
   git: >
@@ -23,17 +27,17 @@
     force=yes
   when: rbenv.env == "system"
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: create plugins directory for system
+- name: Create plugins directory for system
   become: yes
   become_user: '{{ rbenv_owner }}'
   file: state=directory path={{ rbenv_root }}/plugins
   when: rbenv.env == "system"
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: install plugins for system
+- name: Install plugins for system
   become: yes
   become_user: '{{ rbenv_owner }}'
   git: >
@@ -45,8 +49,10 @@
   with_items: "{{ rbenv_plugins }}"
   when: rbenv.env == "system"
   tags:
-    - rbenv
+    - rbenv-ruby
+###
 
+# system: rbenv permission
 - name: Set group ownership of content under rbenv_root
   shell:
     find '{{ rbenv_root }}'
@@ -62,7 +68,7 @@
   register: rbenv_chgrp
   changed_when: '"changed group" in rbenv_chgrp.stdout'
   tags:
-    - rbenv
+    - rbenv-ruby
 
 - name: Set group permissions of content under rbenv_root
   shell:
@@ -78,9 +84,11 @@
   register: rbenv_chmod
   changed_when: '"changed from" in rbenv_chmod.stdout'
   tags:
-    - rbenv
+    - rbenv-ruby
+###
 
-- name: checkout rbenv_repo for selected users
+# != system: rbenv install
+- name: Checkout rbenv_repo for selected users
   git: >
     repo={{ rbenv_repo }}
     dest={{ rbenv_root }}
@@ -93,9 +101,9 @@
   when: rbenv.env != "system"
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: create plugins directory for selected users
+- name: Create plugins directory for selected users
   file: state=directory path={{ rbenv_root }}/plugins
   with_items: "{{ rbenv_users }}"
   become: yes
@@ -103,9 +111,9 @@
   when: rbenv.env != "system"
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: install plugins for selected users
+- name: Install plugins for selected users
   git: >
     repo={{ item[1].repo }}
     dest={{ rbenv_root }}/plugins/{{ item[1].name }}
@@ -120,17 +128,20 @@
   when: rbenv.env != "system"
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
+###
 
-- name: add rbenv initialization to profile system-wide
+# rbenv initialization
+- name: Add rbenv initialization to profile system-wide
   template: src=rbenv.sh.j2 dest=/etc/profile.d/rbenv.sh owner=root group=root mode=0755
   become: yes
   when:
     - ansible_os_family != 'OpenBSD' and ansible_os_family != 'Darwin'
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: set default-gems for select users
+# != system
+- name: Set default-gems for select users
   copy: src=default-gems dest={{ rbenv_root }}/default-gems
   with_items: "{{ rbenv_users }}"
   become: yes
@@ -140,9 +151,9 @@
     - default_gems_file is not defined
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: set custom default-gems for select users
+- name: Set custom default-gems for select users
   copy: src={{ default_gems_file }} dest={{ rbenv_root }}/default-gems
   with_items: "{{ rbenv_users }}"
   become: yes
@@ -152,9 +163,9 @@
     - default_gems_file is defined
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: set gemrc for select users
+- name: Set gemrc for select users
   copy: src=gemrc dest=~/.gemrc
   with_items: "{{ rbenv_users }}"
   become: yes
@@ -162,9 +173,9 @@
   when: rbenv.env != "system"
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: set vars for select users
+- name: Set vars for select users
   copy: src=vars dest={{ rbenv_root }}/vars
   with_items: "{{ rbenv_users }}"
   become: yes
@@ -172,9 +183,12 @@
   when: rbenv.env != "system"
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
+###
 
-- name: check ruby {{ rbenv.ruby_version }} installed for system
+# system: install and set ruby
+- name: Check ruby {{ rbenv.ruby_version }} installed for system
+  become: yes
   shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
   register: ruby_installed
   changed_when: false
@@ -182,19 +196,19 @@
   always_run: yes
   when: rbenv.env == "system"
   tags:
-    - rbenv
+    - rbenv-ruby
 - debug: var=ruby_installed
 
-- name: install ruby {{ rbenv.ruby_version }} for system
+- name: Install ruby {{ rbenv.ruby_version }} for system
   shell: bash -lc "rbenv install {{ rbenv.ruby_version }}"
   become: yes
   when:
     - rbenv.env == "system"
     - ruby_installed.rc != 0
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: check if current system ruby version is {{ rbenv.ruby_version }}
+- name: Check if current system ruby version is {{ rbenv.ruby_version }}
   shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
   register: ruby_selected
   changed_when: false
@@ -202,19 +216,21 @@
   always_run: yes
   when: rbenv.env == "system"
   tags:
-    - rbenv
+    - rbenv-ruby
 - debug: var=ruby_selected
 
-- name: set ruby {{ rbenv.ruby_version }} for system
+- name: Set ruby {{ rbenv.ruby_version }} for system
   become: yes
   shell: bash -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
   when:
     - rbenv.env == "system"
     - ruby_selected.rc != 0
   tags:
-    - rbenv
+    - rbenv-ruby
+###
 
-- name: check ruby {{ rbenv.ruby_version }} installed for select users
+# != system: install and set ruby
+- name: Check ruby {{ rbenv.ruby_version }} installed for select users
   shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
   become: yes
   become_user: "{{ item }}"
@@ -225,10 +241,10 @@
   ignore_errors: yes
   always_run: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 - debug: var=ruby_installed
 
-- name: install ruby {{ rbenv.ruby_version }} for select users
+- name: Install ruby {{ rbenv.ruby_version }} for select users
   shell: $SHELL -lc "rbenv install {{ rbenv.ruby_version }}"
   become: yes
   become_user: "{{ item[1] }}"
@@ -240,9 +256,9 @@
     - item[0].rc != 0
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 
-- name: check if user ruby version is {{ rbenv.ruby_version }}
+- name: Check if user ruby version is {{ rbenv.ruby_version }}
   shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
   become: yes
   become_user: "{{ item }}"
@@ -253,10 +269,10 @@
   ignore_errors: yes
   always_run: yes
   tags:
-    - rbenv
+    - rbenv-ruby
 - debug: var=ruby_selected
 
-- name: set ruby {{ rbenv.ruby_version }} for select users
+- name: Set ruby {{ rbenv.ruby_version }} for select users
   shell: $SHELL -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
   become: yes
   become_user: "{{ item[1] }}"
@@ -268,4 +284,5 @@
     - item[0].rc != 0
   ignore_errors: yes
   tags:
-    - rbenv
+    - rbenv-ruby
+###

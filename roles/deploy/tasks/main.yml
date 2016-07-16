@@ -1,8 +1,11 @@
 ---
 # roles/deploy/tasks/main.yml
 
-# moved this to be the first step, because adding the 'universe' repo was intermittantly failing when it was the first step.  i think due to the playbook running too quickly after the system starts.
-# can perhaps look into a timeout, but i dont like waits, they're too organic.
+## moved 'update base ami' to first step because,
+## adding the 'universe' repo was intermittantly failing otherwise.
+## i believe due to playbook running 'too quickly' after instance init and apt files being locked.
+## can perhaps look into a timeout, blech.
+
 - name: Update base AMI
   apt: update_cache=yes upgrade=dist
   become: yes
@@ -11,7 +14,7 @@
   apt_repository: repo='deb http://archive.ubuntu.com/ubuntu {{ansible_distribution_release}} universe' state=present
   become: yes
 
-- name: Install Unsorted Base Packages
+- name: Install unsorted base packages
   apt: name={{ item }} state=latest update_cache=yes
   with_items:
     - libapr1-dev
@@ -48,7 +51,7 @@
     - zshdb
   become: yes
 
-- name: Install Tools
+- name: Install tools
   apt: package={{ item }} state=latest
   with_items:
     - awscli
@@ -84,7 +87,7 @@
   debconf: name=postifx question="postfix/mailname" value="{{ansible_fqdn}}" vtype="string"
   become: yes
 
-- name: Install mail toolset
+- name: Install mail tools
   apt: package={{ item }} state=installed force=yes update_cache=yes cache_valid_time=3600
   with_items:
     - postfix
@@ -99,6 +102,7 @@
 ##sudo apt-get install -y postfix bsd-mailx
 
 
+###################
 ## 90% sure this is all represented in the ansible role
 ### Packer install-ruby.sh ###
 ##git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
@@ -114,15 +118,14 @@
 ##gem install bundler
 
 
-###################################################
+#############################################################
 ## should no longer need to do this as all are templated
 #pull ops-repo for conf files
 ## solve subtree merge issue
 #git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
 #mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
 #rm -rf /tmp/mypizza-ruby/
-###########################
-###############################
+#####################################
 
 
 ### Packer bootstrap.sh ###
@@ -166,6 +169,7 @@ sudo chown root:root /etc/passenger-enterprise-license && \
 sudo chmod 644 /etc/passenger-enterprise-license
 
 
+#####
 ### Papertrail ###
 #echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
 ##wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb
@@ -182,6 +186,7 @@ sudo chmod 644 /etc/passenger-enterprise-license
 ##sudo service remote_syslog restart 
 
 
+#####
 ## Handled via Ansible role
 ### DataDog agent ###
 ##DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
@@ -194,7 +199,8 @@ sudo cp /etc/crontab /etc/crontab.orig
 
 
 
-
+#####
+## simple node example
 #- name: Create www directory
 #  file:
 #    path: /srv/www
