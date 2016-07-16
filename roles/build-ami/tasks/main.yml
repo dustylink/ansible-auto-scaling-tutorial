@@ -8,3 +8,4 @@
     wait: yes
     state: present
   register: ami
+#- debug: var=ami

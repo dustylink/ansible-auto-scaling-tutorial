@@ -176,7 +176,6 @@
 
 - name: check ruby {{ rbenv.ruby_version }} installed for system
   shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
-  become: yes
   register: ruby_installed
   changed_when: false
   ignore_errors: yes
@@ -184,6 +183,7 @@
   when: rbenv.env == "system"
   tags:
     - rbenv
+- debug: var=ruby_installed
 
 - name: install ruby {{ rbenv.ruby_version }} for system
   shell: bash -lc "rbenv install {{ rbenv.ruby_version }}"
@@ -203,6 +203,7 @@
   when: rbenv.env == "system"
   tags:
     - rbenv
+- debug: var=ruby_selected
 
 - name: set ruby {{ rbenv.ruby_version }} for system
   become: yes
@@ -225,6 +226,7 @@
   always_run: yes
   tags:
     - rbenv
+- debug: var=ruby_installed
 
 - name: install ruby {{ rbenv.ruby_version }} for select users
   shell: $SHELL -lc "rbenv install {{ rbenv.ruby_version }}"
@@ -252,6 +254,7 @@
   always_run: yes
   tags:
     - rbenv
+- debug: var=ruby_selected
 
 - name: set ruby {{ rbenv.ruby_version }} for select users
   shell: $SHELL -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"

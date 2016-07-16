@@ -11,7 +11,7 @@
   apt_repository: repo='deb http://archive.ubuntu.com/ubuntu {{ansible_distribution_release}} universe' state=present
   become: yes
 
-- name: Install Base Packages
+- name: Install Unsorted Base Packages
   apt: name={{ item }} state=latest update_cache=yes
   with_items:
     - libapr1-dev
@@ -33,14 +33,11 @@
     - xaw3dg-dev
     - augeas-tools
     - autoconf
-    - awscli
-    - emacs
     - fail2ban
     - god
     - imagemagick
     - lynx
     - mysql-client
-    - nmap
     - ntp
     - nodejs
     - quilt
@@ -49,6 +46,19 @@
     - sqlite3
     - xterm
     - zshdb
+  become: yes
+
+- name: Install Tools
+  apt: package={{ item }} state=latest
+  with_items:
+    - awscli
+    - emacs
+    - nmap
+  become: yes
+
+- name: Capybara Webkit depends
+  apt: package={{ item }} state=latest
+  with_items:
     - qt4-dev-tools
     - libqt4-dev
     - libqt4-core
@@ -89,6 +99,32 @@
 ##sudo apt-get install -y postfix bsd-mailx
 
 
+## 90% sure this is all represented in the ansible role
+### Packer install-ruby.sh ###
+##git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
+##echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+#echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+##git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+#echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
+#source ~/.bash_profile
+##rbenv install 2.2.3
+#rbenv global 2.2.3
+#ruby -v  ## can test expected output
+#echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+##gem install bundler
+
+
+###################################################
+## should no longer need to do this as all are templated
+#pull ops-repo for conf files
+## solve subtree merge issue
+#git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
+#mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
+#rm -rf /tmp/mypizza-ruby/
+###########################
+###############################
+
+
 ### Packer bootstrap.sh ###
 ## move this kind of thing to Vault
 aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/
@@ -98,94 +134,6 @@ chmod 400 ~/.ssh/git-deploy-mypizza
 echo "IdentityFile ~/.ssh/git-deploy-mypizza" >> ~/.ssh/config
 git config --global user.name "deploy-mypizza"
 git config --global user.email "git-deploy@mypizza.com"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Packer install-ruby.sh ###
-git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
-echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
-
-echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
-
-git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
-echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
-
-
-source ~/.bash_profile
-
-
-rbenv install 2.2.3
-rbenv global 2.2.3
-
-
-ruby -v  ## can test expected output
-
-
-echo "gem: --no-ri --no-rdoc" > ~/.gemrc
-gem install bundler
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-###################################################
-## should no longer need to do this as all are templated
-#pull ops-repo for conf files
-## solve subtree merge issue
-git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
-mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
-rm -rf /tmp/mypizza-ruby/
-###########################
-###############################
 
 
 ## Configure Apache
@@ -218,110 +166,30 @@ sudo chown root:root /etc/passenger-enterprise-license && \
 sudo chmod 644 /etc/passenger-enterprise-license
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Papertrail ##
-echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
-
-#wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb
-
-sudo dpkg -i remote-syslog2_0.17_amd64.deb
-
-sudo gem install papertrail
-
-
-## configure papertrail
-
-#sudo mv /tmp/log_files.yml /etc/
-
-
-#sudo mv /tmp/30-papertrail.conf /etc/rsyslog.d/ && \
-#sudo chmod 644 /etc/rsyslog.d/30-papertrail.conf && \
-#sudo chown root: /etc/rsyslog.d/30-papertrail.conf
-
-
-#sudo mv /tmp/remote_syslog.conf /etc/init/ && \
-#sudo chmod 644 /etc/init/remote_syslog.conf && \
-#sudo chown root: /etc/init/remote_syslog.conf
-
-
-#sudo service remote_syslog restart 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## DataDog agent ##
-DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
+### Papertrail ###
+#echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
+##wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb
+#sudo dpkg -i remote-syslog2_0.17_amd64.deb
+#sudo gem install papertrail
+### configure papertrail
+##sudo mv /tmp/log_files.yml /etc/
+##sudo mv /tmp/30-papertrail.conf /etc/rsyslog.d/ && \
+##sudo chmod 644 /etc/rsyslog.d/30-papertrail.conf && \
+##sudo chown root: /etc/rsyslog.d/30-papertrail.conf
+##sudo mv /tmp/remote_syslog.conf /etc/init/ && \
+##sudo chmod 644 /etc/init/remote_syslog.conf && \
+##sudo chown root: /etc/init/remote_syslog.conf
+##sudo service remote_syslog restart 
+
+
+## Handled via Ansible role
+### DataDog agent ###
+##DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
 
 
 ## prep for code
 sudo cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
 sudo cp /etc/crontab /etc/crontab.orig
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
