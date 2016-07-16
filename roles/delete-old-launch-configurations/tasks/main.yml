@@ -7,6 +7,7 @@
     sort: yes
     sort_end: -10
   register: old_lc_result
+- debug: var=old_lc_result
 
 - ec2_lc:
     region: "{{ region }}"

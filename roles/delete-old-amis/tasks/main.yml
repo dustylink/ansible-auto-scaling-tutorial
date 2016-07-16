@@ -8,6 +8,7 @@
     sort: name
     sort_end: -10
   register: old_ami_result
+- debug: var=old_ami_result
 
 - ec2_ami:
     region: "{{ region }}"
