@@ -20,8 +20,9 @@
 - hosts: ami-build
   roles:
     - deploy
+    - rbenv-ruby
     - myp.papertrail
-    - { role: Datadog.datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
+    - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
 
 - hosts: ami-build
   connection: local

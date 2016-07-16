@@ -1,24 +1,19 @@
 ---
 # roles/deploy/tasks/main.yml
 
+# moved this to be the first step, because adding the 'universe' repo was intermittantly failing when it was the first step.  i think due to the playbook running too quickly after the system starts.
+# can perhaps look into a timeout, but i dont like waits, they're too organic.
 - name: Update base AMI
-  apt: upgrade=dist update_cache=yes
-  sudo: yes
+  apt: update_cache=yes upgrade=dist
+  become: yes
+
+- name: Add 'universe' repo based on Ubuntu release
+  apt_repository: repo='deb http://archive.ubuntu.com/ubuntu {{ansible_distribution_release}} universe' state=present
+  become: yes
 
 - name: Install Base Packages
-  apt: name={{ item }} state=latest
+  apt: name={{ item }} state=latest update_cache=yes
   with_items:
-    - build-essential
-    - autoconf
-    - awscli
-    - nmap
-    - ntp
-    - git-core
-    - emacs
-    - augeas-tools
-    - fail2ban
-    - god
-    - imagemagick
     - libapr1-dev
     - libaprutil1-dev
     - libasound2-dev
@@ -32,34 +27,40 @@
     - libmysqlclient-dev
     - libotf-dev
     - libproj-dev
-    - libreadline-dev
     - libsqlite3-dev
-    - libssl-dev
     - libxaw7-dev
-    - libxslt1-dev
     - libyaml-dev
+    - xaw3dg-dev
+    - augeas-tools
+    - autoconf
+    - awscli
+    - emacs
+    - fail2ban
+    - god
+    - imagemagick
     - lynx
     - mysql-client
+    - nmap
+    - ntp
     - nodejs
     - quilt
     - remake
     - sharutils
     - sqlite3
-    - xaw3dg-dev
     - xterm
     - zshdb
     - qt4-dev-tools
     - libqt4-dev
     - libqt4-core
     - libqt4-gui
-  sudo: yes
+  become: yes
 
 - name: Install Apache
   apt: package={{ item }} state=latest
   with_items:
     - apache2-dev
     - apache2-mpm-worker
-  sudo: yes
+  become: yes
 
 ##sudo apt-get update
 ##sudo apt-get -y upgrade
@@ -67,11 +68,11 @@
 
 - name: Set Postfix option type as internet site
   debconf: name=postfix question="postfix/main_mailer_type" value="'Internet Site'" vtype="string"
-  sudo: yes
+  become: yes
 
 - name: Set Postfix option hostname
   debconf: name=postifx question="postfix/mailname" value="{{ansible_fqdn}}" vtype="string"
-  sudo: yes
+  become: yes
 
 - name: Install mail toolset
   apt: package={{ item }} state=installed force=yes update_cache=yes cache_valid_time=3600
@@ -79,7 +80,7 @@
     - postfix
     - mailutils
     - bsd-mailx
-  sudo: yes
+  become: yes
 
 ## config postfix for noninteractive install - can check /etc/postfix/main.cf
 ##sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
@@ -99,25 +100,92 @@ git config --global user.name "deploy-mypizza"
 git config --global user.email "git-deploy@mypizza.com"
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### Packer install-ruby.sh ###
 git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
 echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+
 echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+
 git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
 echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
+
+
 source ~/.bash_profile
+
+
 rbenv install 2.2.3
 rbenv global 2.2.3
+
+
 ruby -v  ## can test expected output
+
+
 echo "gem: --no-ri --no-rdoc" > ~/.gemrc
 gem install bundler
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################
+## should no longer need to do this as all are templated
 #pull ops-repo for conf files
 ## solve subtree merge issue
 git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
 mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
 rm -rf /tmp/mypizza-ruby/
+###########################
+###############################
 
 
 ## Configure Apache

@@ -1,12 +1,16 @@
 ---
+# roles/myp.papertrail/tasks/main.yml
+
 - name: Configure remote_syslog
   template: src="log_files.yml.j2"
             dest="{{ papertrail_conf }}"
   notify:
     - Restart remote_syslog
+  become: yes
 
 - name: Add Papertrail user to service group
   user: name=papertrail
         append=yes
         groups=adm
         state=present
+  become: yes

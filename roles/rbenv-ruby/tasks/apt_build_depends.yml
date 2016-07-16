@@ -1,0 +1,27 @@
+- name: update apt cache
+  apt: update_cache=yes
+  become: true
+  tags:
+    - rbenv
+
+# required for build essential
+- name: Add 'main' repo based on Ubuntu release
+  apt_repository: repo='deb http://archive.ubuntu.com/ubuntu {{ansible_distribution_release}} main' state=present
+  become: true
+
+- name: install build depends
+  apt: pkg={{ item }} state=present install_recommends=no
+  with_items:
+    - build-essential
+    - git
+    - libcurl4-openssl-dev
+    - libffi-dev
+    - libreadline-dev
+    - libssl-dev
+    - libxml2-dev
+    - libxslt1-dev
+    - zlib1g-dev
+  become: true
+  tags:
+    - rbenv
+
