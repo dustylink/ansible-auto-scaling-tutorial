@@ -3,6 +3,7 @@
 
 - name: pkg - Install apache passenger packages
   apt: pkg={{ item }} state={{ passenger_pkgs_state }}
+  become: true
   with_items:
     - apache2-dev
     - apache2-mpm-worker
@@ -13,6 +14,7 @@
 ## nginx not yet configured for mypizza
 - name: pkg - install nginx passenger packages
   apt: pkg={{ item }} state={{ passenger_pkgs_state }}
+  become: true
   with_items:
     - nginx-extras
     - passenger

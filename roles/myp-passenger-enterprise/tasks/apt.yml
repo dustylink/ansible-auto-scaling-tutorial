@@ -12,8 +12,8 @@
     - ca-certificates
   become: true
 
-- name: apt - unset HISTFILE
-  command: unset HISTFILE
+#- name: apt - unset HISTFILE
+#  command: unset HISTFILE
 
 - name: apt - add mypizza keyed 'passenger-enterprise' repo
   template:

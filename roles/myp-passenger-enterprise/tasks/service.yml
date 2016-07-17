@@ -3,8 +3,10 @@
 
 - name: service - ensure apache is running
   service: name=apache2 state=started enabled=yes
+  become: true
   when: passenger_webserver == "apache"
 
 - name: service - ensure nginx is running
   service: name=nginx state=started enabled=yes
+  become: true
   when: passenger_webserver == "nginx"
