@@ -1,5 +1,5 @@
 ---
-# roles/deploy/tasks/main.yml
+# roles/platform-base/tasks/main.yml
 
 ## moved 'update base ami' to first step because,
 ## adding the 'universe' repo was intermittantly failing otherwise.
@@ -91,37 +91,39 @@
   sudo: yes
 
 # git-deploy bootstrap
-- name:
-  s3:
-    bucket: mypizza-deployment-bootstrap
-    object: /git-deploy-mypizza.pub
-    dest: /home/ubuntu/.ssh/git-deploy-mypizza.pub
-    mode: get
+## the below fails due to boto not being install on host?
+#- name:
+#  s3:
+#    bucket: mypizza-deployment-bootstrap
+#    object: /git-deploy-mypizza.pub
+#    dest: /home/ubuntu/.ssh/git-deploy-mypizza.pub
+#    mode: get
 
-- name:
-  s3:
-    bucket: mypizza-deployment-bootstrap
-    object: /git-deploy-mypizza
-    dest: /home/ubuntu/.ssh/git-deploy-mypizza
-    mode: get
+- name: Bootstrap git-deploy public key
+  command: aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/git-deploy-mypizza.pub
 
-- name:
+- name: Bootstrap git-deploy private key
+  command: aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza /home/ubuntu/.ssh/git-deploy-mypizza
+
+# dont think i need this, as i can force the git clone
+#- name: bootstrap known_hosts
+#  command: aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/known_hosts /home/ubuntu/.ssh/known_hosts
+
+- name: Permission git-deploy private key
   file:
     path: ~/.ssh/git-deploy-mypizza
     mode: 0400
 
-- name:
-  lineinfile: 
-  dest: ~/.ssh/config
-  line: "IdentityFile ~/.ssh/git-deploy-mypizza"
+- name: Ensure private key in ssh config
+  lineinfile: dest=~/.ssh/config line="IdentityFile ~/.ssh/git-deploy-mypizza"
 
-- name:
+- name: git_config user name
   git_config:
     name: user.name
     scope: global
     value: deploy-mypizza
 
-- name:
+- name: git_config email
   git_config:
     name: user.email
     scope: global

@@ -20,20 +20,20 @@
 - hosts: ami-build
   roles:
     - platform-base
-    - rbenv-ruby
+#    - rbenv-ruby
     - myp-passenger
     - myp-papertrail
     - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
 
-#- hosts: ami-build
-#  connection: local
-#  gather_facts: yes
-#  roles:
-#    - build-ami
-#    - create-launch-configuration
-#    - load-balancer
-#    - auto-scaling
-#    - dns
+- hosts: ami-build
+  connection: local
+  gather_facts: yes
+  roles:
+    - build-ami
+    - create-launch-configuration
+    - load-balancer
+    - auto-scaling
+    - dns
 
 - hosts: localhost
   connection: local

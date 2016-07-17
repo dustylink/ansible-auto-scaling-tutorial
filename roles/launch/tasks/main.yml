@@ -21,6 +21,7 @@
     group: ['mypizza', 'testansible']
     image: "{{ ami_result.results[0].ami_id }}"
     instance_type: "{{ instance_type }}"
+    instance_profile_name: "deployment-bootstrap"
     instance_tags:
       Name: "{{ name }}"
     volumes: "{{ volumes }}"
