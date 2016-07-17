@@ -1,5 +1,5 @@
 ---
-# roles/passenger-enterprise/tasks/apt.yml
+# roles/myp-passenger/tasks/apt.yml
 
 - name: apt - add phusion key for 'passenger-enterprise' repo
   apt_key: id=561F9B9CAC40B2F7 keyserver=hkp://keyserver.ubuntu.com:80 state=present

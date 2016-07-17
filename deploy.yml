@@ -12,19 +12,18 @@
 
 - hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   roles:
     - role: launch
       name: ami-build
 
 - hosts: ami-build
   roles:
-    - deploy
+    - platform-base
     - rbenv-ruby
-    - myp-passenger-enterprise
+    - myp-passenger
     - myp-papertrail
     - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
-
 
 #- hosts: ami-build
 #  connection: local
@@ -38,13 +37,13 @@
 
 - hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   roles:
     - delete-old-launch-configurations
     - delete-old-amis
 
 - hosts: old-ami-build
   connection: local
-  gather_facts: no
+  gather_facts: false
   roles:
     - terminate

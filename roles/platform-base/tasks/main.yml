@@ -84,6 +84,49 @@
     - bsd-mailx
   become: yes
 
+- name: Backup crontab
+  copy:
+    src: /etc/crontab
+    dest: /etc/crontab.orig
+  sudo: yes
+
+# git-deploy bootstrap
+- name:
+  s3:
+    bucket: mypizza-deployment-bootstrap
+    object: /git-deploy-mypizza.pub
+    dest: /home/ubuntu/.ssh/git-deploy-mypizza.pub
+    mode: get
+
+- name:
+  s3:
+    bucket: mypizza-deployment-bootstrap
+    object: /git-deploy-mypizza
+    dest: /home/ubuntu/.ssh/git-deploy-mypizza
+    mode: get
+
+- name:
+  file:
+    path: ~/.ssh/git-deploy-mypizza
+    mode: 0400
+
+- name:
+  lineinfile: 
+  dest: ~/.ssh/config
+  line: "IdentityFile ~/.ssh/git-deploy-mypizza"
+
+- name:
+  git_config:
+    name: user.name
+    scope: global
+    value: deploy-mypizza
+
+- name:
+  git_config:
+    name: user.email
+    scope: global
+    value: git-deploy@mypizza.com
+
 
 ###################
 ## 90% sure this is all represented in the ansible role
@@ -111,30 +154,34 @@
 #####################################
 
 
+#####
+## added
 ### Packer bootstrap.sh ###
 ## move this kind of thing to Vault
-aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/
-aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza /home/ubuntu/.ssh/
-aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/known_hosts /home/ubuntu/.ssh/
-chmod 400 ~/.ssh/git-deploy-mypizza
-echo "IdentityFile ~/.ssh/git-deploy-mypizza" >> ~/.ssh/config
-git config --global user.name "deploy-mypizza"
-git config --global user.email "git-deploy@mypizza.com"
+##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/
+##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza /home/ubuntu/.ssh/
+##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/known_hosts /home/ubuntu/.ssh/
+##chmod 400 ~/.ssh/git-deploy-mypizza
+##echo "IdentityFile ~/.ssh/git-deploy-mypizza" >> ~/.ssh/config
+##git config --global user.name "deploy-mypizza"
+##git config --global user.email "git-deploy@mypizza.com"
 
 
-## Configure Apache
+#####
+## Handled via Ansible role
+### Configure Apache
 ## Extended Validation SSL
-sudo mkdir /etc/evssl
-sudo mv /tmp/sf_bundle-g2-g1.crt /etc/evssl
-sudo mv /tmp/mypizza.crt /etc/evssl
-sudo mv /tmp/mypizza.key /etc/evssl
+##sudo mkdir /etc/evssl
+##sudo mv /tmp/sf_bundle-g2-g1.crt /etc/evssl
+##sudo mv /tmp/mypizza.crt /etc/evssl
+##sudo mv /tmp/mypizza.key /etc/evssl
 ## these seem very permissive, test and lock down further if possible
-chmod 766 /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt
-chmod 644 /etc/evssl/mypizza.key
-sudo chown root:root /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt /etc/evssl/mypizza.key
-sudo a2enmod rewrite
-sudo a2enmod ssl
-sudo service apache2 restart
+##chmod 766 /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt
+##chmod 644 /etc/evssl/mypizza.key
+##sudo chown root:root /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt /etc/evssl/mypizza.key
+##sudo a2enmod rewrite
+##sudo a2enmod ssl
+##sudo service apache2 restart
 
 
 #####
@@ -178,9 +225,12 @@ sudo service apache2 restart
 ##DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
 
 
+#####
+## added
 ## prep for code
-sudo cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
-sudo cp /etc/crontab /etc/crontab.orig
+##sudo cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
+##sudo cp /etc/crontab /etc/crontab.orig
+
 
 
 

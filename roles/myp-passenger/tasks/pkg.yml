@@ -1,0 +1,102 @@
+---
+# roles/myp-passenger/tasks/pkg.yml
+
+- name: pkg - Install apache passenger packages
+  apt: pkg={{ item }} state={{ passenger_pkgs_state }}
+  become: true
+  with_items:
+    - apache2-dev
+    - apache2-mpm-worker
+    - libapache2-mod-passenger-enterprise
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+- name: Backup apache2.conf
+  copy:
+    src: /etc/apache2/apache2.conf
+    dest: /etc/apache2/apache2.conf.orig
+  sudo: yes
+  when: passenger_webserver == "apache"
+
+## configure apache for mypizza
+- name: Ensures /etc/evssl exists
+  file: 
+    path: /etc/evssl 
+    state: directory
+  when: passenger_webserver == "apache"
+
+## these seem permissive, need to verify 
+- name: Copy bundle cert
+  copy:
+    src: sf_bundle-g2-g1.crt
+    dest: /etc/evssl/sf_bundle-g2-g1.crt
+    owner: root
+    group: root
+    mode: 766
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+- name: Copy mypizza cert
+  copy:
+    src: mypizza.crt
+    dest: /etc/evssl/mypizza.crt
+    owner: root
+    group: root
+    mode: 766
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+- name: Copy mypizza key
+  copy:
+    src: mypizza.key
+    dest: /etc/evssl/mypizza.key
+    owner: root
+    group: root
+    mode: 644
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+- name: Enable apache module 'rewrite'
+  apache2_module:
+    state: present
+    name: rewrite
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+- name: Enable apache module 'ssl'
+  apache2_module:
+    state: present
+    name: ssl
+  notify: apache restart
+  when: passenger_webserver == "apache"
+
+## nginx not yet configured for mypizza
+- name: pkg - install nginx passenger packages
+  apt: pkg={{ item }} state={{ passenger_pkgs_state }}
+  become: true
+  with_items:
+    - nginx-extras
+    - passenger
+  notify: nginx restart
+  when: passenger_webserver == "nginx"
+
+## standalone not yet configured for mypizza
+- name: pkg - install standalone passenger packages
+  apt: pkg={{ item }} state={{ passenger_pkgs_state }}
+  with_items:
+    - passenger
+  when: passenger_webserver == "standalone"
+
+## unsure when needed, keeping for now
+- name: pkg - fix passenger utils shebang
+  lineinfile:
+    dest: "{{ item }}"
+    regexp: '^#\!/usr/bin/ruby\s*'
+    line: "#!/usr/bin/env ruby"
+    backrefs: yes
+    state: present
+  with_items:
+    - /usr/sbin/passenger-memory-stats
+    - /usr/sbin/passenger-status
+  when: passenger_pkgs_fix_shebang
+

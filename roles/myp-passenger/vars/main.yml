@@ -1,0 +1,7 @@
+---
+# roles/myp-passenger/vars/main.yml
+
+passenger_webserver: "apache"
+passenger_pkgs_state: "latest"
+passenger_pkgs_fix_shebang: no
+passenger_apt_key: "017335304efea7182b030e9af2abab392ad4d69fb07753b552eadbc0addcf260"
