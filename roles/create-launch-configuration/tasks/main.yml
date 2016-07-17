@@ -12,4 +12,4 @@
     volumes: "{{ volumes }}"
     instance_monitoring: yes
   register: ec2_lc
-- debug: var=ec2_lc
+#- debug: var=ec2_lc

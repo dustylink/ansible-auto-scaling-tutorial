@@ -68,17 +68,6 @@
     - libqt4-gui
   become: yes
 
-- name: Install Apache
-  apt: package={{ item }} state=latest
-  with_items:
-    - apache2-dev
-    - apache2-mpm-worker
-  become: yes
-
-##sudo apt-get update
-##sudo apt-get -y upgrade
-##sudo apt-get -y install awscli apache2-dev apache2-mpm-worker augeas-tools autoconf build-essential emacs fail2ban git-core god imagemagick libapr1-dev libaprutil1-dev libasound2-dev libgconf2-dev libgeos++-dev libgif-dev libgpm-dev libgtk-3-dev libm17n-dev libmagick++-dev libmysqlclient-dev libotf-dev libproj-dev libreadline-dev libsqlite3-dev libssl-dev libxaw7-dev libxslt1-dev libyaml-dev lynx mysql-client nmap nodejs ntp quilt remake sharutils sqlite3 xaw3dg-dev xterm zshdb qt4-dev-tools libqt4-dev libqt4-core libqt4-gui
-
 - name: Set Postfix option type as internet site
   debconf: name=postfix question="postfix/main_mailer_type" value="'Internet Site'" vtype="string"
   become: yes
@@ -94,12 +83,6 @@
     - mailutils
     - bsd-mailx
   become: yes
-
-## config postfix for noninteractive install - can check /etc/postfix/main.cf
-##sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
-##LOCAL_HOSTNAME="$(wget -q -O - http://169.254.169.254/latest/meta-data/local-hostname)"
-##sudo debconf-set-selections <<< "postfix postfix/mailname string ${LOCAL_HOSTNAME}"
-##sudo apt-get install -y postfix bsd-mailx
 
 
 ###################
@@ -154,22 +137,25 @@ sudo a2enmod ssl
 sudo service apache2 restart
 
 
+#####
+## Handled via Ansible role
 ### Packer install-passenger.sh ###
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
-sudo apt-get install -y apt-transport-https ca-certificates
-unset HISTFILE
-sudo sh -c 'echo deb https://download:017335304efea7182b030e9af2abab392ad4d69fb07753b552eadbc0addcf260@www.phusionpassenger.com/enterprise_apt trusty main > /etc/apt/sources.list.d/passenger.list'
-sudo chown root: /etc/apt/sources.list.d/passenger.list
-sudo chmod 600 /etc/apt/sources.list.d/passenger.list
-sudo apt-get update
-sudo apt-get install -y libapache2-mod-passenger-enterprise
-## configure passenger
-sudo mv /tmp/passenger-enterprise-license /etc/ && \
-sudo chown root:root /etc/passenger-enterprise-license && \
-sudo chmod 644 /etc/passenger-enterprise-license
+##sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
+##sudo apt-get install -y apt-transport-https ca-certificates
+##unset HISTFILE
+##sudo sh -c 'echo deb https://download:017335304efea7182b030e9af2abab392ad4d69fb07753b552eadbc0addcf260@www.phusionpassenger.com/enterprise_apt trusty main > /etc/apt/sources.list.d/passenger.list'
+##sudo chown root: /etc/apt/sources.list.d/passenger.list
+##sudo chmod 600 /etc/apt/sources.list.d/passenger.list
+##sudo apt-get update
+##sudo apt-get install -y libapache2-mod-passenger-enterprise
+### configure passenger
+##sudo mv /tmp/passenger-enterprise-license /etc/ && \
+##sudo chown root:root /etc/passenger-enterprise-license && \
+##sudo chmod 644 /etc/passenger-enterprise-license
 
 
 #####
+## Handled via Ansible role
 ### Papertrail ###
 #echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
 ##wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb

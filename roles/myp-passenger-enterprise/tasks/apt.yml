@@ -1,0 +1,38 @@
+---
+# roles/passenger-enterprise/tasks/apt.yml
+
+- name: apt - add phusion key for 'passenger-enterprise' repo
+  apt_key: id=561F9B9CAC40B2F7 keyserver=hkp://keyserver.ubuntu.com:80 state=present
+  become: true
+
+- name: apt - add support for https
+  apt: pkg={{ item }} state={{ passenger_pkgs_state }} update_cache=yes cache_valid_time=3600
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+  become: true
+
+- name: apt - unset HISTFILE
+  command: unset HISTFILE
+
+- name: apt - add mypizza keyed 'passenger-enterprise' repo
+  template:
+    src: "passenger.list.j2"
+    dest: "/etc/apt/sources.list.d/passenger.list"
+    owner: "root"
+    group: "root"
+    mode: 600
+  become: true
+
+- name: apt - update
+  apt: update_cache=yes
+  become: yes
+
+- name: apt - install passenger-enterprise-license
+  copy:
+    src: "passenger-enterprise-license"
+    dest: "/etc/passenger-enterprise-license"
+    owner: "root"
+    group: "root"
+    mode: 644
+  become: true

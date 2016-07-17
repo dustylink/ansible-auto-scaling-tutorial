@@ -15,5 +15,5 @@
     image_id: "{{ item.ami_id }}"
     delete_snapshot: yes
     state: absent
-  with_items: old_ami_result.results
+  with_items: "{{ old_ami_result.results }}"
   ignore_errors: yes

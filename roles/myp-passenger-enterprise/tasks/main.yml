@@ -1,0 +1,12 @@
+---
+# roles/passenger-enterprise/tasks/main.yml
+
+- include: apt.yml
+  tags: passenger_ent_apt
+
+- include: pkg.yml
+  tags: passenger_ent_pkg
+
+- include: service.yml
+  tags: passenger_ent_service
+  when: passenger_webserver != "standalone"

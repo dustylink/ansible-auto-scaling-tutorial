@@ -1,9 +1,11 @@
 ---
 # roles/delete-old-launch-configurations/tasks/main.yml
 
+## really, there's no core module for lc_find?
+
 - lc_find:
     region: "{{ region }}"
-    name_regex: "webapp-.*"
+    name_regex: "webapp-*"
     sort: yes
     sort_end: -10
   register: old_lc_result
@@ -13,5 +15,5 @@
     region: "{{ region }}"
     name: "{{ item.name }}"
     state: absent
-  with_items: old_lc_result.results
+  with_items: "{{ old_lc_result.results }}"
   ignore_errors: yes
