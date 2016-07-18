@@ -1,8 +1,8 @@
 ---
-# group_vars/all.yml
+# group_vars/production.yml
 
 region: us-east-1
-zone: us-east-1a
+zone: us-east-1e
 keypair: test-ansible.pub
 security_groups: mypizza
 instance_type: m3.medium
@@ -13,5 +13,4 @@ volumes:
     delete_on_termination: true
 domain: mypizzadev.com
 myp_env: demo
-myp_sf_branch: develop
-myp_admin_branch: develop
+myp_branch: develop

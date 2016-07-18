@@ -1,5 +1,5 @@
 ---
-# roles/launch/tasks/main.yml
+# roles/launch-base/tasks/main.yml
 
 - name: Search for the latest Ubuntu 14.04 AMI
   ec2_ami_find:
@@ -23,13 +23,15 @@
     instance_type: "{{ instance_type }}"
     instance_profile_name: "deployment-bootstrap"
     instance_tags:
-      Name: "{{ name }}"
+      Name: "{{ name }}-{{ myp_env }}"
+      Type: "{{ myp_type }}"
+      Env: "{{ myp_env }}"
     volumes: "{{ volumes }}"
     wait: yes
   register: ec2
 #- debug: var=ec2
 
-- name: Add new instances to host group
+- name: Add new instance to host group
   add_host:
     name: "{{ item.public_dns_name }}"
     groups: "{{ name }}"
