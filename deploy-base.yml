@@ -1,5 +1,5 @@
 ---
-# deploy.yml
+# deploy-base.yml
 
 - name: Find existing instance(s)
   hosts: "tag_Name_ami_build"
@@ -14,8 +14,8 @@
   connection: local
   gather_facts: false
   roles:
-    - role: launch
-      name: ami-build
+    - role: launch-base
+      name: ami-build-base
 
 - hosts: ami-build
   roles:

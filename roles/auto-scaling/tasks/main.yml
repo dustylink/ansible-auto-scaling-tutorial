@@ -21,8 +21,8 @@
 - name: Retrieve current Auto Scaling Group properties
   command: "aws --region {{ region }} autoscaling describe-auto-scaling-groups --auto-scaling-group-names webapp"
   register: asg_properties_result
-- debug: var=asg_properties_result
-- debug: var=asg_properties_result.stdout
+#- debug: var=asg_properties_result
+#- debug: var=asg_properties_result.stdout
 
 - name: Set asg_properties variable from JSON output if the Auto Scaling Group already exists
   set_fact:

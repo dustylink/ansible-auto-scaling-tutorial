@@ -54,6 +54,7 @@
 - name: Install tools
   apt: package={{ item }} state=latest
   with_items:
+    - git
     - awscli
     - emacs
     - nmap
@@ -84,14 +85,14 @@
     - bsd-mailx
   become: yes
 
-- name: Backup crontab
-  copy:
-    src: /etc/crontab
-    dest: /etc/crontab.orig
-  sudo: yes
+#- name: Backup crontab
+#  copy:
+#   src: /etc/crontab
+#    dest: /etc/crontab.orig
+#  sudo: yes
 
 # git-deploy bootstrap
-## the below fails due to boto not being install on host?
+## the below fails due to boto not being install on host
 #- name:
 #  s3:
 #    bucket: mypizza-deployment-bootstrap
@@ -115,7 +116,7 @@
     mode: 0400
 
 - name: Ensure private key in ssh config
-  lineinfile: dest=~/.ssh/config line="IdentityFile ~/.ssh/git-deploy-mypizza"
+  lineinfile: dest=~/.ssh/config state=present create=yes line="IdentityFile ~/.ssh/git-deploy-mypizza"
 
 - name: git_config user name
   git_config:
@@ -128,143 +129,3 @@
     name: user.email
     scope: global
     value: git-deploy@mypizza.com
-
-
-###################
-## 90% sure this is all represented in the ansible role
-### Packer install-ruby.sh ###
-##git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
-##echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
-#echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
-##git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
-#echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
-#source ~/.bash_profile
-##rbenv install 2.2.3
-#rbenv global 2.2.3
-#ruby -v  ## can test expected output
-#echo "gem: --no-ri --no-rdoc" > ~/.gemrc
-##gem install bundler
-
-
-#############################################################
-## should no longer need to do this as all are templated
-#pull ops-repo for conf files
-## solve subtree merge issue
-#git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
-#mv /tmp/mypizza-ruby/build/files/shared/* /tmp/
-#rm -rf /tmp/mypizza-ruby/
-#####################################
-
-
-#####
-## added
-### Packer bootstrap.sh ###
-## move this kind of thing to Vault
-##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/
-##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza /home/ubuntu/.ssh/
-##aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/known_hosts /home/ubuntu/.ssh/
-##chmod 400 ~/.ssh/git-deploy-mypizza
-##echo "IdentityFile ~/.ssh/git-deploy-mypizza" >> ~/.ssh/config
-##git config --global user.name "deploy-mypizza"
-##git config --global user.email "git-deploy@mypizza.com"
-
-
-#####
-## Handled via Ansible role
-### Configure Apache
-## Extended Validation SSL
-##sudo mkdir /etc/evssl
-##sudo mv /tmp/sf_bundle-g2-g1.crt /etc/evssl
-##sudo mv /tmp/mypizza.crt /etc/evssl
-##sudo mv /tmp/mypizza.key /etc/evssl
-## these seem very permissive, test and lock down further if possible
-##chmod 766 /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt
-##chmod 644 /etc/evssl/mypizza.key
-##sudo chown root:root /etc/evssl/sf_bundle-g2-g1.crt /etc/evssl/mypizza.crt /etc/evssl/mypizza.key
-##sudo a2enmod rewrite
-##sudo a2enmod ssl
-##sudo service apache2 restart
-
-
-#####
-## Handled via Ansible role
-### Packer install-passenger.sh ###
-##sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
-##sudo apt-get install -y apt-transport-https ca-certificates
-##unset HISTFILE
-##sudo sh -c 'echo deb https://download:017335304efea7182b030e9af2abab392ad4d69fb07753b552eadbc0addcf260@www.phusionpassenger.com/enterprise_apt trusty main > /etc/apt/sources.list.d/passenger.list'
-##sudo chown root: /etc/apt/sources.list.d/passenger.list
-##sudo chmod 600 /etc/apt/sources.list.d/passenger.list
-##sudo apt-get update
-##sudo apt-get install -y libapache2-mod-passenger-enterprise
-### configure passenger
-##sudo mv /tmp/passenger-enterprise-license /etc/ && \
-##sudo chown root:root /etc/passenger-enterprise-license && \
-##sudo chmod 644 /etc/passenger-enterprise-license
-
-
-#####
-## Handled via Ansible role
-### Papertrail ###
-#echo "token: 8EpHeGXR7Tl5fl7yZ2DN" > ~/.papertrail.yml
-##wget https://github.com/papertrail/remote_syslog2/releases/download/v0.17-beta-pkgs/remote-syslog2_0.17_amd64.deb
-#sudo dpkg -i remote-syslog2_0.17_amd64.deb
-#sudo gem install papertrail
-### configure papertrail
-##sudo mv /tmp/log_files.yml /etc/
-##sudo mv /tmp/30-papertrail.conf /etc/rsyslog.d/ && \
-##sudo chmod 644 /etc/rsyslog.d/30-papertrail.conf && \
-##sudo chown root: /etc/rsyslog.d/30-papertrail.conf
-##sudo mv /tmp/remote_syslog.conf /etc/init/ && \
-##sudo chmod 644 /etc/init/remote_syslog.conf && \
-##sudo chown root: /etc/init/remote_syslog.conf
-##sudo service remote_syslog restart 
-
-
-#####
-## Handled via Ansible role
-### DataDog agent ###
-##DD_API_KEY=89205a0859d3d8eaca4e27516899a848 bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/install_agent.sh)"
-
-
-#####
-## added
-## prep for code
-##sudo cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf.orig
-##sudo cp /etc/crontab /etc/crontab.orig
-
-
-
-
-
-#####
-## simple node example
-#- name: Create www directory
-#  file:
-#    path: /srv/www
-#    owner: ubuntu
-#    group: ubuntu
-#    state: directory
-#  sudo: yes
-
-#- name: Clone repository
-#  git:
-#    repo: "https://github.com/atplanet/hello-world-express-app.git"
-#    dest: /srv/www/webapp
-#    version: master
-
-#- name: Install app
-#  npm: name=app path=/srv/www/webapp
-
-#- name: Install upstart script
-#  copy:
-#    src: upstart.conf
-#    dest: /etc/init/webapp.conf
-#  sudo: yes
-
-#- name: Enable and start the application
-#  service:
-#    name: webapp
-#    enabled: yes
-#    state: restarted
-#  sudo: yes

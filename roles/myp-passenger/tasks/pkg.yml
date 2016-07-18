@@ -11,18 +11,19 @@
   notify: apache restart
   when: passenger_webserver == "apache"
 
-- name: Backup apache2.conf
-  copy:
-    src: /etc/apache2/apache2.conf
-    dest: /etc/apache2/apache2.conf.orig
-  sudo: yes
-  when: passenger_webserver == "apache"
+#- name: Backup apache2.conf
+#  copy:
+#    src: /etc/apache2/apache2.conf
+#    dest: /etc/apache2/apache2.conf.orig
+#  become: yes
+#  when: passenger_webserver == "apache"
 
 ## configure apache for mypizza
 - name: Ensures /etc/evssl exists
   file: 
     path: /etc/evssl 
     state: directory
+  become: true
   when: passenger_webserver == "apache"
 
 ## these seem permissive, need to verify 
@@ -33,6 +34,7 @@
     owner: root
     group: root
     mode: 766
+  become: true
   notify: apache restart
   when: passenger_webserver == "apache"
 
@@ -43,6 +45,7 @@
     owner: root
     group: root
     mode: 766
+  become: true
   notify: apache restart
   when: passenger_webserver == "apache"
 
@@ -53,6 +56,7 @@
     owner: root
     group: root
     mode: 644
+  become: true
   notify: apache restart
   when: passenger_webserver == "apache"
 
@@ -60,6 +64,7 @@
   apache2_module:
     state: present
     name: rewrite
+  become: true
   notify: apache restart
   when: passenger_webserver == "apache"
 
@@ -67,6 +72,7 @@
   apache2_module:
     state: present
     name: ssl
+  become: true
   notify: apache restart
   when: passenger_webserver == "apache"
 
@@ -99,4 +105,3 @@
     - /usr/sbin/passenger-memory-stats
     - /usr/sbin/passenger-status
   when: passenger_pkgs_fix_shebang
-
