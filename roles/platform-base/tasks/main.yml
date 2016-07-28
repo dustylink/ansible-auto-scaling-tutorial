@@ -92,14 +92,6 @@
 #  sudo: yes
 
 # git-deploy bootstrap
-## the below fails due to boto not being install on host
-#- name:
-#  s3:
-#    bucket: mypizza-deployment-bootstrap
-#    object: /git-deploy-mypizza.pub
-#    dest: /home/ubuntu/.ssh/git-deploy-mypizza.pub
-#    mode: get
-
 - name: Bootstrap git-deploy public key
   command: aws s3 cp --region us-east-1 s3://mypizza-deployment-bootstrap/git-deploy-mypizza.pub /home/ubuntu/.ssh/git-deploy-mypizza.pub
 

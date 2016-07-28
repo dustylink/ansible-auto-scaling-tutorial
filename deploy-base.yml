@@ -2,7 +2,7 @@
 # deploy-base.yml
 
 - name: Find existing instance(s)
-  hosts: "tag_Name_ami_build_base"
+  hosts: "tag_Name_ami_build_base_*"
   gather_facts: false
   tags: find
   tasks:
@@ -15,10 +15,10 @@
   gather_facts: false
   roles:
     - role: launch-base
-        name: ami-build-base
-        myp_type: base
+      name: ami-build-base
+      myp_type: base
 
-- hosts: ami-build-base
+- hosts: ami-build-base #or {{ name }}
   roles:
     - platform-base
 #    - rbenv-ruby
@@ -26,12 +26,12 @@
     - myp-papertrail
     - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
 
-- hosts: ami-build-base
+- hosts: ami-build-base #or {{ name }}
   connection: local
   gather_facts: yes
   roles:
     - build-ami
-    - create-launch-configuration
+#    - create-launch-configuration
     - load-balancer
 #    - auto-scaling
     - dns

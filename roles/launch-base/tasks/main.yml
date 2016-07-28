@@ -23,9 +23,8 @@
     instance_type: "{{ instance_type }}"
     instance_profile_name: "deployment-bootstrap"
     instance_tags:
-      Name: "{{ name }}-{{ myp_env }}"
+      Name: "{{ name }}"
       Type: "{{ myp_type }}"
-      Env: "{{ myp_env }}"
     volumes: "{{ volumes }}"
     wait: yes
   register: ec2

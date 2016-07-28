@@ -1,0 +1,50 @@
+---
+# deploy-storefront.yml
+
+- name: Find existing instance(s)
+  hosts: "tag_Name_ami_build_storefront_*"
+  gather_facts: false
+  tags: find
+  tasks:
+    - name: Add to old-ami-build-storefront group
+      group_by:
+        key: old-ami-build-storefront
+
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: launch-role
+      name: ami-build-storefront
+      myp_type: storefront
+
+- hosts: ami-build-storefront
+  roles:
+#    - platform-base
+#    - rbenv-ruby
+#    - myp-passenger
+#    - myp-papertrail
+#    - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
+
+- hosts: ami-build-storefront
+  connection: local
+  gather_facts: yes
+  roles:
+    - build-ami
+    - create-launch-configuration
+    - load-balancer
+    - auto-scaling
+    - dns
+
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - delete-old-launch-configurations
+    - delete-old-amis
+
+- hosts: old-ami-build-storefront
+  connection: local
+  gather_facts: false
+  roles:
+    - terminate
