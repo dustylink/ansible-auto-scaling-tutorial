@@ -4,7 +4,7 @@
 - ec2_ami_find:
     region: "{{ region }}"
     owner: self
-    name: "webapp-*"
+    name: "{{ name }}-*"
     sort: name
     sort_end: -10
   register: old_ami_result

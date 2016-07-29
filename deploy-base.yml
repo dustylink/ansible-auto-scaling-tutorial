@@ -1,8 +1,11 @@
 ---
 # deploy-base.yml
 
+- name: Include base vars
+  include_vars: group_vars/base.yml
+
 - name: Find existing instance(s)
-  hosts: "tag_Name_ami_build_base_*"
+  hosts: "tag_Name_ami_build_base*"
   gather_facts: false
   tags: find
   tasks:
@@ -15,8 +18,8 @@
   gather_facts: false
   roles:
     - role: launch-base
-      name: ami-build-base
-      myp_type: base
+#      name: ami-build-base
+#      myp_type: base
 
 - hosts: ami-build-base #or {{ name }}
   roles:
@@ -32,15 +35,15 @@
   roles:
     - build-ami
 #    - create-launch-configuration
-    - load-balancer
+#    - load-balancer
 #    - auto-scaling
-    - dns
+#    - dns
 
 - hosts: localhost
   connection: local
   gather_facts: false
   roles:
-    - delete-old-launch-configurations
+#    - delete-old-launch-configurations
     - delete-old-amis
 
 - hosts: old-ami-build-base

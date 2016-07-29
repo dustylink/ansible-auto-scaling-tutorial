@@ -1,0 +1,5 @@
+---
+# group_vars/base.yml
+
+name: ami-build-base
+myp_type: base
