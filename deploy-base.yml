@@ -1,8 +1,11 @@
 ---
 # deploy-base.yml
 
-- name: Include base vars
-  include_vars: group_vars/base.yml
+## this doesnt seem to propogate between roles, even when hosts: localhost
+#- hosts: localhost
+#  vars:
+#    name: ami-builder-base
+#    myp_type: base
 
 - name: Find existing instance(s)
   hosts: "tag_Name_ami_build_base*"
@@ -13,27 +16,31 @@
       group_by:
         key: old-ami-build-base
 
-- hosts: localhost
+- name: Launch new build base
+  hosts: localhost
   connection: local
   gather_facts: false
   roles:
     - role: launch-base
-#      name: ami-build-base
-#      myp_type: base
+      name: ami-build-base
+      myp_type: base
 
-- hosts: ami-build-base #or {{ name }}
+- name: Provision new build base
+  hosts: ami-build-base #this is an ansible group created in the launch-base role
   roles:
     - platform-base
-#    - rbenv-ruby
+    - rbenv-ruby
     - myp-passenger
     - myp-papertrail
     - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
 
-- hosts: ami-build-base #or {{ name }}
+- hosts: ami-build-base #this is an ansible group created in the launch-base role
   connection: local
   gather_facts: yes
   roles:
-    - build-ami
+    - role: build-ami
+      name: ami-build-base
+      myp_type: base
 #    - create-launch-configuration
 #    - load-balancer
 #    - auto-scaling
@@ -43,8 +50,8 @@
   connection: local
   gather_facts: false
   roles:
+    - { role: delete-old-amis, name: ami-build-base, myp_type: base }
 #    - delete-old-launch-configurations
-    - delete-old-amis
 
 - hosts: old-ami-build-base
   connection: local

@@ -1,5 +1,5 @@
 ---
 # group_vars/base.yml
 
-name: ami-build-base
+name: ami-buildest-base
 myp_type: base

@@ -1,0 +1,54 @@
+---
+# deploy-myp-type.yml
+
+- name: Find existing instance(s)
+  hosts: "tag_Name_ami_build_{{myp_type}}_{{myp_env}}"
+  gather_facts: false
+  tags: find
+  tasks:
+    - name: Add to old-ami-build-{{myp_type}}_{{myp_env}} group
+      group_by:
+        key: "old-ami-build-{{myp_type}}_{{myp_env}}"
+
+- name: Launch new myp_type
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: launch-role
+      name: "ami-build-{{myp_type}}_{{myp_env}}"
+
+- name: Provision new myp_type
+  hosts: "ami-build-{{myp_type}}{{myp_env}}" #this is an ansible group created in the launch-role role
+  roles:
+#    - platform-base
+
+- name: Provision new myp_type supporting infra
+  hosts: "ami-build-{{myp_type}}_{{myp_env}}" #this is an ansible group created in the launch-base role
+  connection: local
+  gather_facts: yes
+  vars:
+    name: ami-builder-{{myp_type}}
+  roles:
+    - build-ami
+#    - create-launch-configuration
+    - load-balancer
+#    - auto-scaling
+    - dns
+
+- name: clean up old AMIs and LCs
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    name: "ami-build-{{ myp_type }}_{{ myp_env }}"
+  roles:
+    - delete-old-amis
+#    - delete-old-launch-configurations
+
+- name: clean up old builders for this playbook
+  hosts: "old-ami-build-{{myp_type}}_{{ myp_env }}"
+  connection: local
+  gather_facts: false
+  roles:
+    - terminate
