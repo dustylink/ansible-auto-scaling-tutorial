@@ -1,0 +1,248 @@
+---
+# roles/setup-storefront/tasks/main.yml
+
+##handled via motd role
+#echo 'This is a storefront server:' | sudo tee --append /etc/motd > /dev/null
+
+#sudo apt-get update
+#sudo apt-get -y upgrade
+- name: Update role AMI
+  apt: 
+    update_cache: yes 
+    upgrade: dist
+  become: true
+
+##no need - all will be templates
+#git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
+#mv /tmp/mypizza-ruby/build/files/storefront/* /tmp/
+#rm -rf /tmp/mypizza-ruby/
+
+#sudo rm /etc/apache2/apache2.conf
+- name: Remove default apache2.conf
+  file: 
+    path: /etc/apache2/apache2.conf 
+    state: absent
+  become: true
+
+#sudo mv /tmp/sf-apache2.conf /etc/apache2/apache2.conf
+#sudo chown root:root /etc/apache2/apache2.conf
+- name: Copy sf-apache2.conf
+  copy:
+    src: sf-apache2.conf
+    dest: /etc/apache2/apache2.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify: apache restart
+
+## passenger.conf
+## PassengerPreStart
+#sudo mv /tmp/sf-passenger-m3l.conf /etc/apache2/conf-available/ && \
+#sudo chown root: /etc/apache2/conf-available/sf-passenger-m3l.conf && \
+#sudo chmod 644 /etc/apache2/conf-available/sf-passenger-m3l.conf
+#if [[ $MYP_ENV = "sandbox" ]]; then
+#  sudo sed -i -e '$a\' /etc/apache2/conf-available/sf-passenger-m3l.conf && echo "PassengerPreStart http://sandbox.mypizzadev.com/" | sudo tee --append /etc/apache2/conf-available/sf-passenger-m3l.conf > /dev/null
+#elif [[ $MYP_ENV = "qa" ]]; then
+#  sudo sed -i -e '$a\' /etc/apache2/conf-available/sf-passenger-m3l.conf && echo "PassengerPreStart http://qa.mypizzadev.com/" | sudo tee --append /etc/apache2/conf-available/sf-passenger-m3l.conf > /dev/null
+#elif [[ $MYP_ENV = "demo" ]]; then
+#  sudo sed -i -e '$a\' /etc/apache2/conf-available/sf-passenger-m3l.conf && echo "PassengerPreStart http://demo.mypizzadev.com/" | sudo tee --append /etc/apache2/conf-available/sf-passenger-m3l.conf > /dev/null
+#else echo "$MYP_ENV not found!"; exit 0; fi
+- name: Template sf-passenger-m3l.conf
+  template:
+    src: sf-passenger-m3l.conf.j2
+    dest: /etc/apache2/conf-available/sf-passenger-m3l.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify: apache restart
+
+#sudo ln -s /etc/apache2/conf-available/sf-passenger-m3l.conf /etc/apache2/conf-enabled/sf-passenger-m3l.conf
+- name: Enable conf sf-passenger-m3l.conf
+  file: 
+    src: /etc/apache2/conf-available/sf-passenger-m3l.conf
+    dest: /etc/apache2/conf-enabled/sf-passenger-m3l.conf
+    state: link
+  become: true
+  notify: apache restart
+
+## mypizza.conf
+#sudo mv /tmp/qa-sf-mypizza.conf /etc/apache2/sites-available/
+#sudo chown root:root /etc/apache2/sites-available/qa-sf-mypizza.conf
+#sudo mv /tmp/sandbox-sf-mypizza.conf /etc/apache2/sites-available/
+#sudo chown root:root /etc/apache2/sites-available/sandbox-sf-mypizza.conf
+#sudo mv /tmp/demo-sf-mypizza.conf /etc/apache2/sites-available/
+#sudo chown root:root /etc/apache2/sites-available/demo-sf-mypizza.conf
+- name: Copy prod-sf-mypizza.conf
+  copy:
+    src: prod-sf-mypizza.conf
+    dest: /etc/apache2/sites-available/prod-sf-mypizza.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify: apache restart
+  when: myp_env == "production"
+
+- name: Template nonprod-sf-mypizza.conf
+  template:
+    src: "nonprod-sf-mypizza.conf.j2"
+    dest: "/etc/apache2/sites-available/{{ myp_env }}-sf-mypizza.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  become: true
+  notify: apache restart
+  when: myp_env != "production"
+
+#sudo rm -f /etc/apache2/sites-enabled/000-default.conf
+- name: Remove default apache site enabled
+  file: 
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+  become: true
+
+#if [[ $MYP_ENV = "sandbox" ]]; then
+#  sudo ln -s /etc/apache2/sites-available/sandbox-sf-mypizza.conf /etc/apache2/sites-enabled/sandbox-sf-mypizza.conf
+#elif [[ $MYP_ENV = "qa" ]]; then
+#  sudo ln -s /etc/apache2/sites-available/qa-sf-mypizza.conf /etc/apache2/sites-enabled/qa-sf-mypizza.conf
+#elif [[ $MYP_ENV = "demo" ]]; then
+#  sudo ln -s /etc/apache2/sites-available/demo-sf-mypizza.conf /etc/apache2/sites-enabled/demo-sf-mypizza.conf
+#else echo "$MYP_ENV not found!"; exit 0; fi
+- name: Enable site sf-mypizza.conf
+  file: 
+    src: /etc/apache2/sites-available/{{ myp_env }}-sf-mypizza.conf
+    dest: /etc/apache2/sites-enabled/{{ myp_env }}-sf-mypizza.conf
+    state: link
+  become: true
+  notify: apache restart
+
+#if [[ $MYP_ENV = "sandbox" ]]; then
+#  sudo sed -i 's|127.0.0.1 localhost|127.0.0.1 localhost sandbox.mypizzadev.com|g' /etc/hosts
+#elif [[ $MYP_ENV = "qa" ]]; then
+#  sudo sed -i 's|127.0.0.1 localhost|127.0.0.1 localhost qa.mypizzadev.com|g' /etc/hosts
+#elif [[ $MYP_ENV = "demo" ]]; then
+#  sudo sed -i 's|127.0.0.1 localhost|127.0.0.1 localhost demo.mypizzadev.com|g' /etc/hosts
+#else echo "$MYP_ENV not found!"; exit 0; fi
+- name: Prod adjust /etc/hosts to myp_env
+  replace: 
+    dest: /etc/hosts
+    regexp: '127\.0\.0\.1\slocalhost' 
+    replace: "127.0.0.1 localhost {{ myp_env }}.mypizza.com"
+    backup: yes
+  become: true
+  notify: apache restart
+  when: myp_env == "production"
+
+- name: Nonprod adjust /etc/hosts to myp_env
+  replace: 
+    dest: /etc/hosts
+    regexp: '127\.0\.0\.1\slocalhost' 
+    replace: "127.0.0.1 localhost {{ myp_env }}.mypizzadev.com"
+    backup: yes
+  become: true
+  notify: apache restart
+  when: myp_env != "production"
+
+#sudo mkdir /var/mypizza/ && sudo chown ubuntu /var/mypizza/
+- name: Make directory /var/mypizza/
+  file: 
+    path: /var/mypizza
+    state: directory
+    owner: ubuntu
+    group: root
+    mode: 0755
+  become: true
+
+#git clone -b master git@github.com:mypizza/mypizza-web.git /tmp/mypizza-web
+#mv /tmp/mypizza-web/ /var/mypizza/storefront  <------- may still need to include this
+- name: Git clone mypizza-web (storefront)
+  git: 
+    repo: ssh://git@github.com:mypizza/mypizza-web.git
+    dest: /var/mypizza/storefront
+    version: master
+
+#mkdir -p \
+#/var/mypizza/shared/log \
+#/var/mypizza/shared/public/assets \
+#/var/mypizza/shared/tmp/pids \
+#/var/mypizza/shared/tmp/cache \
+#/var/mypizza/shared/tmp/sockets \
+#/var/mypizza/shared/vendor/bundle \
+#/var/mypizza/shared/public/system \
+#/var/mypizza/storefront/tmp \
+#/var/mypizza/storefront/vendor \
+#/var/mypizza/storefront/public \
+#/var/mypizza/storefront/assets_manifest_backup
+- name: Make storefront directories
+  file: 
+    path: "{{ item }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: 0775
+    recursive: true
+    with_items:
+      - /var/mypizza/storefront/tmp
+      - /var/mypizza/storefront/vendor
+      - /var/mypizza/storefront/public
+      - /var/mypizza/storefront/assets_manifest_backup
+
+- name: Make storefront shared directories
+  file: 
+    path: "{{ item }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: 0775
+    recursive: true
+    with_items:
+      - /var/mypizza/shared/log
+      - /var/mypizza/shared/public/assets
+      - /var/mypizza/shared/tmp/pids
+      - /var/mypizza/shared/tmp/cache
+      - /var/mypizza/shared/tmp/sockets
+      - /var/mypizza/shared/vendor/bundle
+      - /var/mypizza/shared/public/system
+
+#rm -rf /var/mypizza/storefront/log
+- name: Remove default storefront log
+  file: 
+    path: /var/mypizza/storefront/log
+    state: absent
+  become: true
+
+#ln -s /var/mypizza/shared/log /var/mypizza/storefront/log
+#ln -s /var/mypizza/shared/public/assets /var/mypizza/storefront/public/assets
+#ln -s /var/mypizza/shared/tmp/pids /var/mypizza/storefront/tmp/pids
+#ln -s /var/mypizza/shared/tmp/cache /var/mypizza/storefront/tmp/cache
+#ln -s /var/mypizza/shared/tmp/sockets /var/mypizza/storefront/tmp/sockets
+#ln -s /var/mypizza/shared/vendor/bundle /var/mypizza/storefront/vendor/bundle
+#ln -s /var/mypizza/shared/public/system /var/mypizza/storefront/public/system
+- name: Make storefront symlinks
+  file:
+    src: /var/mypizza/shared/{{ item.path }}
+    dest: /var/mypizza/storefront/{{ item.dest }}
+    state: link
+  with_items:
+    - { path: 'log', dest: 'log' }
+    - { path: 'public/assets', dest: 'public/assets' }
+    - { path: 'tmp/pids', dest: 'tmp/pids' }
+    - { path: 'tmp/cache', dest: 'tmp/cache' }
+    - { path: 'tmp/sockets', dest: 'tmp/sockets' }
+    - { path: 'vendor/bundle', dest: 'vendor/bundle' }
+    - { path: 'public/system', dest: 'public/system' }
+
+#cd /var/mypizza/storefront/
+#if [[ $MYP_ENV = "sandbox" ]]; then
+#  RAILS_ENV=sandbox bundle install
+#elif [[ $MYP_ENV = "qa" ]]; then
+#  RAILS_ENV=qa bundle install
+#elif [[ $MYP_ENV = "demo" ]]; then
+#  RAILS_ENV=demo bundle install
+#else echo "$MYP_ENV not found!"; exit 0; fi
+#sudo service apache2 restart #<---- handler should take care of this
+- name: Install Storefront # this may want to be its own install-application role eventually
+  command: cd /var/mypizza/storefront/ && RAILS_ENV={{ myp_env }} bundle install
+  notify: apache restart

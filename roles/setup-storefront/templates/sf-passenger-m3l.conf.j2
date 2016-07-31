@@ -1,0 +1,20 @@
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+LoadModule passenger_module /usr/lib/apache2/modules/mod_passenger.so
+  <IfModule mod_passenger.c>
+    PassengerRoot /usr/lib/ruby/vendor_ruby/phusion_passenger/locations.ini
+    PassengerDefaultRuby /home/ubuntu/.rbenv/versions/2.2.3/bin/ruby
+  </IfModule>
+
+# The below values are adjusted for a m3.large instance which has 7.5GB Memory x 2 vCPUs
+# If we go to say m3.xlarge (15GB Memory x 4 vCPU) then we might double this
+PassengerMaxPoolSize 20
+PassengerPoolIdleTime 0
+PassengerMaxPreloaderIdleTime 0
+PassengerMaxRequestTime 20
+
+PassengerMinInstances 20
+
+# See https://www.phusionpassenger.com/library/config/apache/reference/#passengermaxrequestqueuesize
+# 0 below means unlimited. The default is 100
+PassengerMaxRequestQueueSize 0
+PassengerPreStart http://{{ myp_env }}.mypizzadev.com/

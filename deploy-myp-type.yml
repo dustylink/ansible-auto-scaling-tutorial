@@ -2,13 +2,13 @@
 # deploy-myp-type.yml
 
 - name: Find existing instance(s)
-  hosts: "tag_Name_ami_build_{{myp_type}}_{{myp_env}}"
+  hosts: "tag_Name_ami_build_{{ myp_type }}_{{ myp_env }}"
   gather_facts: false
   tags: find
   tasks:
-    - name: Add to old-ami-build-{{myp_type}}_{{myp_env}} group
+    - name: Add to old_ami_build_{{ myp_type }}_{{ myp_env }} group
       group_by:
-        key: "old-ami-build-{{myp_type}}_{{myp_env}}"
+        key: "old_ami_build_{{ myp_type }}_{{ myp_env }}" #creates ansible group
 
 - name: Launch new myp_type
   hosts: localhost
@@ -16,19 +16,20 @@
   gather_facts: false
   roles:
     - role: launch-role
-      name: "ami-build-{{myp_type}}_{{myp_env}}"
+      name: "ami-build-{{ myp_type }}-{{ myp_env }}"
 
 - name: Provision new myp_type
-  hosts: "ami-build-{{myp_type}}{{myp_env}}" #this is an ansible group created in the launch-role role
+  hosts: "ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by role: launch-role
   roles:
-#    - platform-base
+    - motd
+    - setup-{{ myp_type }}
 
 - name: Provision new myp_type supporting infra
-  hosts: "ami-build-{{myp_type}}_{{myp_env}}" #this is an ansible group created in the launch-base role
+  hosts: "ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by role: launch-role
   connection: local
   gather_facts: yes
   vars:
-    name: ami-builder-{{myp_type}}
+    name: "ami-build-{{ myp_type }}-{{ myp_env }}"
   roles:
     - build-ami
 #    - create-launch-configuration
@@ -41,13 +42,13 @@
   connection: local
   gather_facts: false
   vars:
-    name: "ami-build-{{ myp_type }}_{{ myp_env }}"
+    name: "ami-build-{{ myp_type }}-{{ myp_env }}"
   roles:
     - delete-old-amis
 #    - delete-old-launch-configurations
 
 - name: clean up old builders for this playbook
-  hosts: "old-ami-build-{{myp_type}}_{{ myp_env }}"
+  hosts: "old_ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by play: Find existing instance(s)
   connection: local
   gather_facts: false
   roles:

@@ -6,7 +6,7 @@
     command: create
     overwrite: yes
     zone: "{{ domain }}"
-    record: "ansible-built.{{ domain }}"
+    record: "{{name}}.{{ domain }}"
     type: CNAME
     ttl: 300
     value: "{{ elb_result.elb.dns_name }}"

@@ -1,0 +1,6 @@
+---
+# roles/setup-storefront/handlers/main.yml
+
+- name: apache restart
+  service: name=apache2 state=restarted
+  become: yes
