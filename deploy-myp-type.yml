@@ -23,6 +23,7 @@
   roles:
     - { role: motd, become: yes }
     - setup-{{ myp_type }}
+    - setup-assets-precompile
 
 - name: Provision new myp_type supporting infra
   hosts: "ami-build-{{ myp_type }}-{{ myp_env }}" #ansible group created by role: launch-role
@@ -32,7 +33,7 @@
     name: "ami-build-{{ myp_type }}-{{ myp_env }}"
   roles:
     - build-ami
-#    - create-launch-configuration
+    - create-launch-configuration
     - load-balancer
 #    - auto-scaling
     - dns
@@ -45,7 +46,7 @@
     name: "ami-build-{{ myp_type }}-{{ myp_env }}"
   roles:
     - delete-old-amis
-#    - delete-old-launch-configurations
+    - delete-old-launch-configurations
 
 - name: clean up old builders for this playbook
   hosts: "old_ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by play: Find existing instance(s)
