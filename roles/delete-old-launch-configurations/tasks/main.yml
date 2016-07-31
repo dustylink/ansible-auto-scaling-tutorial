@@ -5,9 +5,9 @@
 
 - lc_find:
     region: "{{ region }}"
-    name_regex: "webapp-*"
+    name_regex: "{{ name }}-*"
     sort: yes
-    sort_end: -10
+    sort_end: -5
   register: old_lc_result
 - debug: var=old_lc_result
 

@@ -1,6 +1,12 @@
-- name: update apt cache
+---
+# roles/rbenv-ruby/tasks/apt_build_depends.yml
+
+- name: Update apt cache
   apt: update_cache=yes
   become: true
+  register: result
+  until: result|success
+  retries: 4
   tags:
     - rbenv-ruby
 
@@ -26,4 +32,3 @@
   become: true
   tags:
     - rbenv-ruby
-

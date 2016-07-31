@@ -6,8 +6,15 @@
 ## i believe due to playbook running 'too quickly' after instance init and apt files being locked.
 ## can perhaps look into a timeout, blech.
 
+- name: Update apt cache
+  apt: update_cache=yes
+  become: true
+  register: result
+  until: result|success
+  retries: 4
+
 - name: Update base AMI
-  apt: update_cache=yes upgrade=dist
+  apt: upgrade=dist
   become: yes
 
 - name: Add 'universe' repo based on Ubuntu release

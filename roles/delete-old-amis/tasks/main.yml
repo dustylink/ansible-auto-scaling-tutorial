@@ -6,7 +6,7 @@
     owner: self
     name: "{{ name }}-*"
     sort: name
-    sort_end: -10
+    sort_end: -5
   register: old_ami_result
 - debug: var=old_ami_result
 

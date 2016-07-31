@@ -9,3 +9,8 @@ elif [[ $MYP_ENV = "demo" ]]; then
   cd /var/mypizza/storefront/ && \
   RAILS_ENV=demo bundle exec rake assets:precompile --trace >> ~/demo-precompile.log 2>&1
 else echo "$MYP_ENV not found!"; exit 0; fi
+
+#    - name: Precompile assets
+#      command: rake assets:precompile chdir={{ this_release_path }}
+#      environment:
+#        RAILS_ENV: '{{ rails_env }}'

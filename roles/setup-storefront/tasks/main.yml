@@ -6,11 +6,16 @@
 
 #sudo apt-get update
 #sudo apt-get -y upgrade
-- name: Update role AMI
-  apt: 
-    update_cache: yes 
-    upgrade: dist
+- name: Update apt cache
+  apt: update_cache=yes
   become: true
+  register: result
+  until: result|success
+  retries: 4
+
+- name: Update role AMI
+  apt: upgrade=dist
+  become: yes
 
 ##no need - all will be templates
 #git clone git@github.com:mypizza/mypizza-ruby.git /tmp/mypizza-ruby
@@ -249,32 +254,9 @@
 #- name: Install Storefront # this may want to be its own install-application role eventually
 #  command: cd /var/mypizza/storefront/ && RAILS_ENV={{ myp_env }} bundle install
 #  notify: apache restart
-
-
-
 - name: Install storefront bundle
-  command: "bundle install"
+  command: /usr/local/rbenv/shims/bundle install
   args:
-    chdir: "/var/mypizza/storefront"
+    chdir: /var/mypizza/storefront/
   environment:
     RAILS_ENV: "{{ myp_env }}"
-
-
-
-
-
-
-#    - name: Install bundle
-#      command: 'bundle install --deployment --without="development test"'
-#      args:
-#        chdir: '{{ this_release_path }}'
-
-#    - name: Precompile assets
-#      command: rake assets:precompile chdir={{ this_release_path }}
-#      environment:
-#        RAILS_ENV: '{{ rails_env }}'
-
-
-
-
-

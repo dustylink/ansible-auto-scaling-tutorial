@@ -140,12 +140,10 @@
   tags:
     - rbenv-ruby
 
-# system default gems
-- name: Set default-gems for select users
+# system: default gems
+- name: Set default-gems for system
   copy: src=default-gems dest={{ rbenv_root }}/default-gems
-  with_items: "{{ rbenv_users }}"
   become: yes
-  become_user: "{{ item }}"
   when:
     - rbenv.env == "system"
     - default_gems_file is not defined
