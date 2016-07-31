@@ -2,7 +2,7 @@
 # deploy-myp-type.yml
 
 - name: Find existing instance(s)
-  hosts: "tag_Name_ami_build_{{ myp_type }}_{{ myp_env }}"
+  hosts: "tag_Name_ami_build_{{ myp_type }}_{{ myp_env }}" # tag_Name matches '-' with '_'
   gather_facts: false
   tags: find
   tasks:
@@ -19,13 +19,13 @@
       name: "ami-build-{{ myp_type }}-{{ myp_env }}"
 
 - name: Provision new myp_type
-  hosts: "ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by role: launch-role
+  hosts: "ami-build-{{ myp_type }}-{{ myp_env }}" #ansible group created by role: launch-role
   roles:
-    - motd
+    - { role: motd, become: yes }
     - setup-{{ myp_type }}
 
 - name: Provision new myp_type supporting infra
-  hosts: "ami_build_{{ myp_type }}_{{ myp_env }}" #ansible group created by role: launch-role
+  hosts: "ami-build-{{ myp_type }}-{{ myp_env }}" #ansible group created by role: launch-role
   connection: local
   gather_facts: yes
   vars:

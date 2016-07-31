@@ -146,22 +146,27 @@
   when: myp_env != "production"
 
 #sudo mkdir /var/mypizza/ && sudo chown ubuntu /var/mypizza/
-- name: Make directory /var/mypizza/
+- name: Make directory /var/mypizza/storefront
   file: 
-    path: /var/mypizza
+    path: /var/mypizza/storefront
     state: directory
     owner: ubuntu
     group: root
     mode: 0755
+    recurse: true
   become: true
 
 #git clone -b master git@github.com:mypizza/mypizza-web.git /tmp/mypizza-web
 #mv /tmp/mypizza-web/ /var/mypizza/storefront  <------- may still need to include this
 - name: Git clone mypizza-web (storefront)
-  git: 
-    repo: ssh://git@github.com:mypizza/mypizza-web.git
-    dest: /var/mypizza/storefront
-    version: master
+  git: repo=ssh://git@github.com/mypizza/mypizza-web.git
+       dest=/var/mypizza/storefront
+       version=master
+       accept_hostkey=yes
+#       key_file=/home/ubuntu/.ssh/git-deploy-mypizza
+
+
+#- git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
 
 #mkdir -p \
 #/var/mypizza/shared/log \
@@ -176,35 +181,33 @@
 #/var/mypizza/storefront/public \
 #/var/mypizza/storefront/assets_manifest_backup
 - name: Make storefront directories
-  file: 
-    path: "{{ item }}"
-    state: directory
-    owner: ubuntu
-    group: ubuntu
-    mode: 0775
-    recursive: true
-    with_items:
-      - /var/mypizza/storefront/tmp
-      - /var/mypizza/storefront/vendor
-      - /var/mypizza/storefront/public
-      - /var/mypizza/storefront/assets_manifest_backup
+  file: path=/var/mypizza/storefront/{{ item }}
+        state=directory
+        owner=ubuntu
+        group=ubuntu
+        mode=0775
+        recurse=true
+  with_items:
+    - tmp
+    - vendor
+    - public
+    - assets_manifest_backup
 
 - name: Make storefront shared directories
-  file: 
-    path: "{{ item }}"
-    state: directory
-    owner: ubuntu
-    group: ubuntu
-    mode: 0775
-    recursive: true
-    with_items:
-      - /var/mypizza/shared/log
-      - /var/mypizza/shared/public/assets
-      - /var/mypizza/shared/tmp/pids
-      - /var/mypizza/shared/tmp/cache
-      - /var/mypizza/shared/tmp/sockets
-      - /var/mypizza/shared/vendor/bundle
-      - /var/mypizza/shared/public/system
+  file: path=/var/mypizza/shared/{{ item }}
+        state=directory
+        owner=ubuntu
+        group=ubuntu
+        mode=0775
+        recurse=true
+  with_items:
+    - log
+    - public/assets
+    - tmp/pids
+    - tmp/cache
+    - tmp/sockets
+    - vendor/bundle
+    - public/system
 
 #rm -rf /var/mypizza/storefront/log
 - name: Remove default storefront log
@@ -243,6 +246,35 @@
 #  RAILS_ENV=demo bundle install
 #else echo "$MYP_ENV not found!"; exit 0; fi
 #sudo service apache2 restart #<---- handler should take care of this
-- name: Install Storefront # this may want to be its own install-application role eventually
-  command: cd /var/mypizza/storefront/ && RAILS_ENV={{ myp_env }} bundle install
-  notify: apache restart
+#- name: Install Storefront # this may want to be its own install-application role eventually
+#  command: cd /var/mypizza/storefront/ && RAILS_ENV={{ myp_env }} bundle install
+#  notify: apache restart
+
+
+
+- name: Install storefront bundle
+  command: "bundle install"
+  args:
+    chdir: "/var/mypizza/storefront"
+  environment:
+    RAILS_ENV: "{{ myp_env }}"
+
+
+
+
+
+
+#    - name: Install bundle
+#      command: 'bundle install --deployment --without="development test"'
+#      args:
+#        chdir: '{{ this_release_path }}'
+
+#    - name: Precompile assets
+#      command: rake assets:precompile chdir={{ this_release_path }}
+#      environment:
+#        RAILS_ENV: '{{ rails_env }}'
+
+
+
+
+

@@ -8,6 +8,8 @@
 - name: Add 'main' repo based on Ubuntu release
   apt_repository: repo='deb http://archive.ubuntu.com/ubuntu {{ansible_distribution_release}} main' state=present
   become: true
+  tags:
+    - rbenv-ruby
 
 - name: install build depends
   apt: pkg={{ item }} state=present install_recommends=no
