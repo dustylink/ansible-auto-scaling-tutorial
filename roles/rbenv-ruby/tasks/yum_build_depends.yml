@@ -1,5 +1,5 @@
 ---
-- name: install build depends
+- name: Yum install build depends
   yum: name={{ item }} state=present
   with_items:
     - gcc

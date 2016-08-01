@@ -28,11 +28,11 @@
 - name: Provision new build base
   hosts: ami-build-base #this is an ansible group created in the launch-base role
   roles:
-#    - platform-base
+    - platform-base
     - rbenv-ruby
-#    - myp-passenger
-#    - myp-papertrail
-#    - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
+    - myp-passenger
+    - myp-papertrail
+    - { role: datadog, become: yes, datadog_api_key: "89205a0859d3d8eaca4e27516899a848" }
 
 - hosts: ami-build-base #this is an ansible group created in the launch-base role
   connection: local

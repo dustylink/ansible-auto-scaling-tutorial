@@ -17,7 +17,7 @@
   tags:
     - rbenv-ruby
 
-- name: install build depends
+- name: Apt install build depends
   apt: pkg={{ item }} state=present install_recommends=no
   with_items:
     - build-essential
