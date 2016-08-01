@@ -1,2 +1,4 @@
 ---
+# roles/rbenv-ruby/vars/user.yml
+
 rbenv_root: "~/.rbenv"
