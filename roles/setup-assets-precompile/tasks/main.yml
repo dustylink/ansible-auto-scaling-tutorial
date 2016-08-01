@@ -12,7 +12,7 @@
 #  RAILS_ENV=demo bundle exec rake assets:precompile --trace >> ~/demo-precompile.log 2>&1
 #else echo "$MYP_ENV not found!"; exit 0; fi
 - name: Precompile assets
-  command: "/usr/local/rbenv/shims/bundle exec rake assets:precompile --trace >> ~/{{ myp_env }}-precompile.log 2>&1"
+  command: "/usr/local/rbenv/shims/bundle exec rake assets:precompile --trace" #>> ~/{{ myp_env }}-precompile.log 2>&1
   args:
     chdir: /var/mypizza/storefront/
   environment:

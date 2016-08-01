@@ -1,11 +1,11 @@
 ---
 # roles/rbenv-ruby/tasks/main.yml
 
-# setup
+# install supporting packages
 - name: Include env vars
   include_vars: "{{ rbenv.env }}.yml"
 
-- include: apt_build_depends.yml
+- include: apt_build_depends.yml 
   when: ansible_pkg_mgr == 'apt'
 - include: yum_build_depends.yml
   when: ansible_pkg_mgr == 'yum'
