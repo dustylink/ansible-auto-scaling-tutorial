@@ -92,52 +92,52 @@
 
 # != system: rbenv install
 - name: Checkout rbenv_repo for user install
+  with_items: "{{ rbenv_users }}"
+  become: yes
+  become_user: "{{ item }}"
   git: >
     repo={{ rbenv_repo }}
     dest={{ rbenv_root }}
     version={{ rbenv.version }}
     accept_hostkey=yes
     force=yes
-  with_items: "{{ rbenv_users }}"
-  become: yes
-  become_user: "{{ item }}"
   when: rbenv.env != "system"
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Create plugins directory for user install
-  file: state=directory path={{ rbenv_root }}/plugins
   with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
+  file: state=directory path={{ rbenv_root }}/plugins
   when: rbenv.env != "system"
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Install plugins for user install
+  with_nested:
+    - "{{ rbenv_users }}"
+    - "{{ rbenv_plugins }}"
+  become: yes
+  become_user: "{{ item[0] }}"
   git: >
     repo={{ item[1].repo }}
     dest={{ rbenv_root }}/plugins/{{ item[1].name }}
     version={{ item[1].version }}
     accept_hostkey=yes
     force=yes
-  with_nested:
-    - "{{ rbenv_users }}"
-    - "{{ rbenv_plugins }}"
-  become: yes
-  become_user: "{{ item[0] }}"
   when: rbenv.env != "system"
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 ###
 
 # rbenv initialization
 - name: Add rbenv initialization to profile system-wide
-  template: src=rbenv.sh.j2 dest=/etc/profile.d/rbenv.sh owner=root group=root mode=0755
   become: yes
+  template: src=rbenv.sh.j2 dest=/etc/profile.d/rbenv.sh owner=root group=root mode=0755
   when:
     - ansible_os_family != 'OpenBSD' and ansible_os_family != 'Darwin'
   tags:
@@ -150,52 +150,52 @@
   when:
     - rbenv.env == "system"
     - default_gems_file is not defined
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 # != system
 - name: Set default-gems for for user install
-  copy: src=default-gems dest={{ rbenv_root }}/default-gems
   with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
+  copy: src=default-gems dest={{ rbenv_root }}/default-gems
   when:
     - not "system" == "{{ rbenv.env }}"
     - default_gems_file is not defined
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Set custom default-gems for user install
-  copy: src={{ default_gems_file }} dest={{ rbenv_root }}/default-gems
   with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
+  copy: src={{ default_gems_file }} dest={{ rbenv_root }}/default-gems
   when:
     - not "system" == "{{ rbenv.env }}"
     - default_gems_file is defined
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Set gemrc for user install
-  copy: src=gemrc dest=~/.gemrc
   with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
+  copy: src=gemrc dest=~/.gemrc
   when: rbenv.env != "system"
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Set vars for user install
-  copy: src=vars dest={{ rbenv_root }}/vars
   with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
+  copy: src=vars dest={{ rbenv_root }}/vars
   when: rbenv.env != "system"
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 ###
@@ -244,55 +244,56 @@
 ###
 
 # != system: install and set ruby
-- name: Check ruby {{ rbenv.ruby_version }} installed for user install
-  shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
+- name: Check if ruby {{ rbenv.ruby_version }} is installed (user install)
+  with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
-  with_items: "{{ rbenv_users }}"
-  when: rbenv.env != "system"
+  shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
   register: ruby_installed
   changed_when: false
   ignore_errors: yes
   always_run: yes
+  when: rbenv.env != "system"
   tags:
     - rbenv-ruby
 - debug: var=ruby_installed
+- debug: var=ruby_installed.results
 
 - name: Install ruby {{ rbenv.ruby_version }} (user install)
-  shell: $SHELL -lc "rbenv install {{ rbenv.ruby_version }}"
-  become: yes
-  become_user: "{{ item[1] }}"
   with_together:
     - "{{ ruby_installed.results }}"
     - "{{ rbenv_users }}"
+  become: yes
+  become_user: "{{ item[1] }}"
+  shell: $SHELL -lc "rbenv install {{ rbenv.ruby_version }}"
   when:
     - rbenv.env != "system"
     - item[0].rc != 0
-  ignore_errors: yes
+#  ignore_errors: yes
   tags:
     - rbenv-ruby
 
 - name: Check if current ruby version is {{ rbenv.ruby_version }}  (user install)
-  shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
+  with_items: "{{ rbenv_users }}"
   become: yes
   become_user: "{{ item }}"
-  with_items: "{{ rbenv_users }}"
-  when: rbenv.env != "system"
+  shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
   register: ruby_selected
   changed_when: false
   ignore_errors: yes
   always_run: yes
+  when: rbenv.env != "system"
   tags:
     - rbenv-ruby
 - debug: var=ruby_selected
 
-- name: Set ruby {{ rbenv.ruby_version }} for user install
-  shell: $SHELL -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
-  become: yes
-  become_user: "{{ item[1] }}"
+- name: Set ruby {{ rbenv.ruby_version }} (user install)
   with_together:
     - "{{ ruby_selected.results }}"
     - "{{ rbenv_users }}"
+  become: yes
+  become_user: "{{ item[1] }}"
+  shell: $SHELL -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
   when:
     - rbenv.env != "system"
     - item[0].rc != 0
@@ -300,3 +301,9 @@
   tags:
     - rbenv-ruby
 ###
+
+# != system: install bundler
+# shouldnt have to do this, need to fix default gems section for user install
+- name: install bundler (user install)
+  shell: $SHELL -lc "gem install bundler"
+  when: rbenv.env != "system"

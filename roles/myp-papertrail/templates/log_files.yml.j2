@@ -9,8 +9,12 @@ files:
   - /var/log/apache2/error.log
   - /var/log/apache2/other_vhosts_access.log
   # Application logs
-  - /var/mypizza/current/log/production.log
-  - /var/mypizza/current/log/staging.log
+  - /var/mypizza/storefront/log/production.log
+  - /var/mypizza/storefront/log/sandbox.log
+  - /var/mypizza/storefront/log/qa.log
+  - /var/mypizza/storefront/log/demo.log
+  - /var/mypizza/admin/log/jobs.log
+  - /var/mypizza/worker/log/jobs.log
 exclude_patterns:
   - GET /500.html
 destination:
